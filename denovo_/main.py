@@ -2,6 +2,7 @@ import parsers
 import helper
 import maxentscan
 import pysam
+import alleles
 
 
 def run(options, version):
@@ -61,6 +62,11 @@ def run(options, version):
             'control': control_data[var_key]
         }
 
+        # Allele counts in the parents
+        parent_alleles = {}
+        parent_alleles['mother_tc'], parent_alleles['mother_tr'] = alleles.count(mother_bam, var_key)
+        parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
+
         # MaxEntScan scores of the variant
         maxentscan_scores = maxentscan_data.get_scores(var_key)
 
@@ -73,14 +79,13 @@ def run(options, version):
                 mother_var_data,
                 father_var_data,
                 freqs,
-                mother_bam,
-                father_bam
+                parent_alleles
         )
         if is_candidate:
-            helper.output(out_denovo, var_key, data, freqs, maxentscan_scores, '.')
+            helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
             counter_denovo += 1
         else:
-            helper.output(out_filtered, var_key, data, freqs, maxentscan_scores, ';'.join(reason))
+            helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, ';'.join(reason))
             counter_filtered += 1
 
     # Finalize progress info

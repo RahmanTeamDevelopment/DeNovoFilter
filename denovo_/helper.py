@@ -1,9 +1,8 @@
 from __future__ import division
-import alleles
 import sys
 
 
-def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, freqs, mother_bam, father_bam):
+def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, freqs, parent_alleles):
 
     ret = True
     reason = []
@@ -57,20 +56,18 @@ def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, fat
         ret = False
 
     # Check TC and TR in the mother
-    mother_tc, mother_tr = alleles.count(mother_bam, var_key)
-    if mother_tc < config['PARENT_MIN_COVERAGE']:
+    if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
         reason.append('low_mother_tc')
         ret = False
-    if mother_tr >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
+    if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
         reason.append('high_mother_tr')
         ret = False
 
     # Check TC and TR in the father
-    father_tc, father_tr = alleles.count(father_bam, var_key)
-    if father_tc < config['PARENT_MIN_COVERAGE']:
+    if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
         reason.append('low_father_tc')
         ret = False
-    if father_tr >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
+    if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
         reason.append('high_father_tr')
         ret = False
 
@@ -86,7 +83,7 @@ def find_multiallelic_calls(var_data):
             counts[k] = 1
         else:
             counts[k] += 1
-    return [x for x in counts.keys() if counts[k] > 1]
+    return [x for x in counts.keys() if counts[x] > 1]
 
 
 def within_splice_site_boundary(csn, cutoff):
@@ -101,7 +98,7 @@ def within_splice_site_boundary(csn, cutoff):
         coord_part1, coord_part2 = coords, None
 
     # Split first coordinate to exon and intron part
-    coordinate1, intron_coordinate1 = _split_to_exon_and_intron_coordinates(coord_part1)
+    _, intron_coordinate1 = _split_to_exon_and_intron_coordinates(coord_part1)
 
     if intron_coordinate1 is not None:
         if abs(int(intron_coordinate1)) > cutoff:
@@ -109,9 +106,9 @@ def within_splice_site_boundary(csn, cutoff):
 
     # Split second coordinate to exon and intron part (if any)
     if coord_part2 is not None:
-        coordinate2, intron_coordinate2 = _split_to_exon_and_intron_coordinates(coord_part2)
+        _, intron_coordinate2 = _split_to_exon_and_intron_coordinates(coord_part2)
     else:
-        coordinate2 = intron_coordinate2 = None
+        intron_coordinate2 = None
 
     if intron_coordinate2 is not None:
         if abs(int(intron_coordinate2)) > cutoff:
@@ -144,10 +141,14 @@ def output_header(outfile):
         'CLASS',
         'ALTANN',
         'ALTCLASS',
-        'GNOMAD_freq',
-        'CONTROL_freq',
-        'TR',
-        'TC'
+        'gnomAD_frequency',
+        'Control_frequency',
+        'Child_TR',
+        'Child_TC',
+        'Mother_TR',
+        'Mother_TC',
+        'Father_TR',
+        'Father_TC',
         'MaxEntScan_RefKnown5',
         'MaxEntScan_RefKnown3',
         'MaxEntScan_AltKnown',
@@ -165,12 +166,12 @@ def output_header(outfile):
         'MaxEntScan_PercentReduction',
         'MaxEntScan_MAX5',
         'MaxEntScan_MAX3',
-        'Info'
+        'Flags'
     ]
     outfile.write('\t'.join(header)+'\n')
 
 
-def output(outfile, var_key, data, freqs, maxentscan_scores, reason):
+def output(outfile, var_key, data, freqs, parent_alleles, maxentscan_scores, reason):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -187,7 +188,11 @@ def output(outfile, var_key, data, freqs, maxentscan_scores, reason):
         freqs['gnomad'],
         freqs['control'],
         data['TR'],
-        data['TC']
+        data['TC'],
+        parent_alleles['mother_tr'],
+        parent_alleles['mother_tc'],
+        parent_alleles['father_tr'],
+        parent_alleles['father_tc']
     ]
 
     maxentscan_columns = [
