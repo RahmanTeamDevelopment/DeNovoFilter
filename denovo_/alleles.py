@@ -14,8 +14,8 @@ def count(samfile, var_key):
     tr = 0
     for read in samfile.fetch(chrom, start, end + 1):
 
-        # TODO Any other condition to add here?
-        if read.is_duplicate or not read.is_proper_pair:
+        # Filter out optical and PCR duplicate reads
+        if read.is_duplicate:
             continue
 
         tc += 1
