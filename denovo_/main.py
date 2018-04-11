@@ -33,11 +33,13 @@ def run(options, version):
     control_data = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
 
     # Read MaxEntScan data
-    maxentscan_data = maxentscan.MaxEntScanData(config['MAXENTSCAN_DATA_FILE'])
+    maxentscan_data = maxentscan.MaxEntScanData(config['MAXENTSCAN_DATA_FILE']) if config['MAXENTSCAN_DATA_FILE'] != '' else None
 
     # Initialize output files
     out_denovo = open('{}_denovo_candidates.txt'.format(options.output), 'w')
+    helper.output_header(out_denovo, config['MAXENTSCAN_DATA_FILE'] != '')
     out_filtered = open('{}_filtered.txt'.format(options.output), 'w')
+    helper.output_header(out_filtered, config['MAXENTSCAN_DATA_FILE'] != '')
 
     # Initialize counters
     counter = 0
@@ -68,7 +70,7 @@ def run(options, version):
         parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
 
         # MaxEntScan scores of the variant
-        maxentscan_scores = maxentscan_data.get_scores(var_key)
+        maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
 
         # Check if variant is a de novo candidate and output to file
         is_candidate, reason = helper.is_candidate(

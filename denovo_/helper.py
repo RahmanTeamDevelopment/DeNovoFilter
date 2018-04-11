@@ -129,7 +129,7 @@ def _split_to_exon_and_intron_coordinates(coord_part):
     return exonpart, intronpart
 
 
-def output_header(outfile):
+def output_header(outfile, maxentscan_columns):
 
     header = [
         'CHROM',
@@ -148,26 +148,29 @@ def output_header(outfile):
         'Mother_TR',
         'Mother_TC',
         'Father_TR',
-        'Father_TC',
-        'MaxEntScan_RefKnown5',
-        'MaxEntScan_RefKnown3',
-        'MaxEntScan_AltKnown',
-        'MaxEntScan_AltHighest5',
-        'MaxEntScan_RefHighest5',
-        'MaxEntScan_AltHighest3',
-        'MaxEntScan_RefHighest3',
-        'MaxEntScan_Boundary5',
-        'MaxEntScan_Boundary3',
-        'MaxEntScan_PI5',
-        'MaxEntScan_PI3',
-        'MaxEntScan_RefKnown',
-        'MaxEntScan_SpliceSiteScore',
-        'MaxEntScan_SpliceSiteType',
-        'MaxEntScan_PercentReduction',
-        'MaxEntScan_MAX5',
-        'MaxEntScan_MAX3',
-        'Flags'
+        'Father_TC'
     ]
+    if maxentscan_columns:
+        header += [
+            'MaxEntScan_RefKnown5',
+            'MaxEntScan_RefKnown3',
+            'MaxEntScan_AltKnown',
+            'MaxEntScan_AltHighest5',
+            'MaxEntScan_RefHighest5',
+            'MaxEntScan_AltHighest3',
+            'MaxEntScan_RefHighest3',
+            'MaxEntScan_Boundary5',
+            'MaxEntScan_Boundary3',
+            'MaxEntScan_PI5',
+            'MaxEntScan_PI3',
+            'MaxEntScan_RefKnown',
+            'MaxEntScan_SpliceSiteScore',
+            'MaxEntScan_SpliceSiteType',
+            'MaxEntScan_PercentReduction',
+            'MaxEntScan_MAX5',
+            'MaxEntScan_MAX3'
+        ]
+    header += ['Flags']
     outfile.write('\t'.join(header)+'\n')
 
 
@@ -195,30 +198,31 @@ def output(outfile, var_key, data, freqs, parent_alleles, maxentscan_scores, rea
         parent_alleles['father_tc']
     ]
 
-    maxentscan_columns = [
-        'RefKnown5',
-        'RefKnown3',
-        'AltKnown',
-        'AltHighest5',
-        'RefHighest5',
-        'AltHighest3',
-        'RefHighest3',
-        'Boundary5',
-        'Boundary3',
-        'PI5',
-        'PI3',
-        'RefKnown',
-        'SpliceSiteScore',
-        'SpliceSiteType',
-        'PercentReduction',
-        'MAX5',
-        'MAX3'
-    ]
     if maxentscan_scores is not None:
-        for c in maxentscan_columns:
-            record.append(maxentscan_scores[c])
-    else:
-        record += ['.'] * len(maxentscan_columns)
+        maxentscan_columns = [
+            'RefKnown5',
+            'RefKnown3',
+            'AltKnown',
+            'AltHighest5',
+            'RefHighest5',
+            'AltHighest3',
+            'RefHighest3',
+            'Boundary5',
+            'Boundary3',
+            'PI5',
+            'PI3',
+            'RefKnown',
+            'SpliceSiteScore',
+            'SpliceSiteType',
+            'PercentReduction',
+            'MAX5',
+            'MAX3'
+        ]
+        if maxentscan_scores != {}:
+            for c in maxentscan_columns:
+                record.append(maxentscan_scores[c])
+        else:
+            record += ['.'] * len(maxentscan_columns)
 
     record += [reason]
 
