@@ -53,7 +53,7 @@ def run(options, version):
     for var_key, data_list in child_var_data.iteritems():
 
         for data in data_list:
-        
+
             counter += 1
 
             # Print progress info
@@ -62,7 +62,7 @@ def run(options, version):
             # Variant frequencies
             csn_key = (data['gene'], data['csn'])
             freqs = {
-                'gnomad': helper.read_gnomad_data(gnomad_file, var_key[0], var_key[1], csn_key[0], csn_key[1])['freq'],
+                'gnomad': helper.read_gnomad_data(gnomad_file, var_key, csn_key)['freq'],
                 'control': control_data[var_key]
             }
 

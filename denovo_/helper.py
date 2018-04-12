@@ -281,9 +281,14 @@ def finalize_progress():
     print ' - Done.'
 
 
-def read_gnomad_data(tabix_file, chrom, pos, gene, csn):
+def read_gnomad_data(tabix_file, var_key, csn_key):
 
     delta = 100
+
+    chrom = var_key[0]
+    pos = int(var_key[1])
+    gene = csn_key[0]
+    csn = csn_key[1]
     for line in tabix_file.fetch(chrom, pos - delta, pos + delta):
         line = line.strip()
         cols = line.split('\t')
