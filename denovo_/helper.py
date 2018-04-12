@@ -296,21 +296,45 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
         if cols[6] != 'PASS':
             continue
 
+        n_alts = len(cols[4].split(','))
+
         flags = {}
         for x in cols[7].split(';'):
             if '=' not in x:
                 continue
-            [k, v] = x.split('=')
+            k = x[:x.find('=')]
+            v = x[x.find('=') + 1:]
             flags[k] = v
 
-        if not (gene == flags['GENE'] and csn == flags['CSN']):
-            continue
+        for i in range(n_alts):
 
-        values = {}
-        for k in ['GC', 'POPMAX', 'AC_POPMAX', 'AN_POPMAX', 'AF_POPMAX']:
-            values[k] = flags[k]
+            if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
+                continue
 
-        GCv = map(int, values['GC'].split(','))
-        values['freq'] = 100 * (GCv[1] + GCv[2]) / sum(GCv)
+            popmax = flags['POPMAX'].split(',')[i]
+            return float(frequencies(flags['GC_' + popmax], n_alts)[i])
 
-        return values
+    return 0.0
+
+
+def frequencies(gc, n_alts):
+
+    ret = []
+
+    GCv = map(int, gc.split(','))
+
+    genotypes = []
+    for a1 in range(n_alts+1):
+        for a2 in range(a1+1):
+            genotypes.append((a1,a2))
+
+    for i in range(n_alts):
+        N = 0
+        for j in range(len(genotypes)):
+            if i+1 in genotypes[j]:
+                N += GCv[j]
+        ret.append(100 * N / sum(GCv))
+
+    return ret
+
+

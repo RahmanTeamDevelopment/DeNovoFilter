@@ -62,7 +62,7 @@ def run(options, version):
             # Variant frequencies
             csn_key = (data['gene'], data['csn'])
             freqs = {
-                'gnomad': helper.read_gnomad_data(gnomad_file, var_key, csn_key)['freq'],
+                'gnomad': helper.read_gnomad_data(gnomad_file, var_key, csn_key),
                 'control': control_data[var_key]
             }
 
