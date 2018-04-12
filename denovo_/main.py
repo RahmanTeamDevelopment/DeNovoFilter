@@ -50,45 +50,47 @@ def run(options, version):
     helper.init_progress()
 
     # Iterate through the variants called in the child
-    for var_key, data in child_var_data.iteritems():
+    for var_key, data_list in child_var_data.iteritems():
 
-        counter += 1
+        for data in data_list:
+        
+            counter += 1
 
-        # Print progress info
-        helper.print_progress(counter, len(child_var_data))
+            # Print progress info
+            helper.print_progress(counter, len(child_var_data))
 
-        # Variant frequencies
-        csn_key = (data['gene'], data['csn'])
-        freqs = {
-            'gnomad': helper.read_gnomad_data(gnomad_file, var_key[0], var_key[1], csn_key[0], csn_key[1])['freq'],
-            'control': control_data[var_key]
-        }
+            # Variant frequencies
+            csn_key = (data['gene'], data['csn'])
+            freqs = {
+                'gnomad': helper.read_gnomad_data(gnomad_file, var_key[0], var_key[1], csn_key[0], csn_key[1])['freq'],
+                'control': control_data[var_key]
+            }
 
-        # Allele counts in the parents
-        parent_alleles = {}
-        parent_alleles['mother_tc'], parent_alleles['mother_tr'] = alleles.count(mother_bam, var_key)
-        parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
+            # Allele counts in the parents
+            parent_alleles = {}
+            parent_alleles['mother_tc'], parent_alleles['mother_tr'] = alleles.count(mother_bam, var_key)
+            parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
 
-        # MaxEntScan scores of the variant
-        maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
+            # MaxEntScan scores of the variant
+            maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
 
-        # Check if variant is a de novo candidate and output to file
-        is_candidate, reason = helper.is_candidate(
-                var_key,
-                data,
-                config,
-                multiallelic_calls,
-                mother_var_data,
-                father_var_data,
-                freqs,
-                parent_alleles
-        )
-        if is_candidate:
-            helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
-            counter_denovo += 1
-        else:
-            helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, ';'.join(reason))
-            counter_filtered += 1
+            # Check if variant is a de novo candidate and output to file
+            is_candidate, reason = helper.is_candidate(
+                    var_key,
+                    data,
+                    config,
+                    multiallelic_calls,
+                    mother_var_data,
+                    father_var_data,
+                    freqs,
+                    parent_alleles
+            )
+            if is_candidate:
+                helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
+                counter_denovo += 1
+            else:
+                helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, ';'.join(reason))
+                counter_filtered += 1
 
     # Finalize progress info
     helper.finalize_progress()
