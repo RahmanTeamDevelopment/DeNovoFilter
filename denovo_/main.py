@@ -28,8 +28,8 @@ def run(options, version):
     mother_bam = pysam.AlignmentFile(options.mother_bam, "rb")
     father_bam = pysam.AlignmentFile(options.father_bam, "rb")
 
-    # Read gnomAD and control database files
-    gnomad_data, gnomad_use_csn = parsers.read_gnomad_database_file(config['GNOMAD_DATA_FILE'])
+    # Connect to gnomAD and control database files
+    gnomad_file = pysam.Tabixfile(config['GNOMAD_DATA_FILE'])
     control_data = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
 
     # Read MaxEntScan data
@@ -60,7 +60,7 @@ def run(options, version):
         # Variant frequencies
         csn_key = (data['gene'], data['csn'])
         freqs = {
-            'gnomad': gnomad_data[csn_key]['freq'] if gnomad_use_csn else gnomad_data[var_key]['freq'],
+            'gnomad': helper.read_gnomad_data(gnomad_file, var_key[0], var_key[1], csn_key[0], csn_key[1])['freq'],
             'control': control_data[var_key]
         }
 

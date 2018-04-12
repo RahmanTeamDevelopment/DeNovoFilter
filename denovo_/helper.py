@@ -279,3 +279,33 @@ def finalize_progress():
     sys.stdout.write('\rProcessing variants ... 100.0%')
     sys.stdout.flush()
     print ' - Done.'
+
+
+def read_gnomad_data(tabix_file, chrom, pos, gene, csn):
+
+    delta = 100
+    for line in tabix_file.fetch(chrom, pos - delta, pos + delta):
+        line = line.strip()
+        cols = line.split('\t')
+
+        if cols[6] != 'PASS':
+            continue
+
+        flags = {}
+        for x in cols[7].split(';'):
+            if '=' not in x:
+                continue
+            [k, v] = x.split('=')
+            flags[k] = v
+
+        if not (gene == flags['GENE'] and csn == flags['CSN']):
+            continue
+
+        values = {}
+        for k in ['GC', 'POPMAX', 'AC_POPMAX', 'AN_POPMAX', 'AF_POPMAX']:
+            values[k] = flags[k]
+
+        GCv = map(int, values['GC'].split(','))
+        values['freq'] = 100 * (GCv[1] + GCv[2]) / sum(GCv)
+
+        return values
