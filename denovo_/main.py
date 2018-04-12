@@ -61,10 +61,12 @@ def run(options, version):
 
             # Variant frequencies
             csn_key = (data['gene'], data['csn'])
-            freqs = {
-                'gnomad': helper.read_gnomad_data(gnomad_file, var_key, csn_key),
-                'control': control_data[var_key]
-            }
+            freqs = {}
+            freqs['gnomad'] = helper.read_gnomad_data(gnomad_file, var_key, csn_key)
+            if var_key in control_data:
+                freqs['control'] = control_data[var_key]
+            else:
+                freqs['control'] = 0.0
 
             # Allele counts in the parents
             parent_alleles = {}
