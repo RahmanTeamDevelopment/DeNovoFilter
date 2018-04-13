@@ -367,6 +367,11 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
                 continue
 
             popmax = flags['POPMAX'].split(',')[i]
+
+            # Temporary fix:
+            if 'GC_' + popmax not in flags:
+                return 0.0
+
             return float(frequencies(flags['GC_' + popmax], n_alts)[i])
 
     return 0.0
