@@ -136,7 +136,7 @@ def read_custom_database_file(fn):
             cols = line.split('\t')
 
             if use_csn:
-                key = (cols[4], cols[5])
+                key = (cols[6], cols[9])
             else:
                 key = tuple(cols[:4])
 
