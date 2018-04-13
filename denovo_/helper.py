@@ -193,7 +193,7 @@ def output_header(outfile, maxentscan_columns):
         'POS',
         'REF',
         'ALT',
-        'GENE'
+        'GENE',
         'CSN',
         'CLASS',
         'ALTANN',

@@ -22,8 +22,8 @@ def read_variant_file(fn):
                     'gene': cols[13],
                     'csn': cols[16],
                     'class_': cols[17],
-                    'altann': cols[20],
-                    'altclass': cols[21]
+                    'altann': cols[23],
+                    'altclass': cols[24]
                 }
             )
 
