@@ -140,7 +140,7 @@ def read_custom_database_file(fn):
             else:
                 key = tuple(cols[:4])
 
-            ret[key] = 100 * int(cols[-1]) / num_of_samples
+            ret[key] = 100 * int(cols[20]) / num_of_samples
 
     return ret
 
