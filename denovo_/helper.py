@@ -299,23 +299,6 @@ def goodbye(counter_denovo, counter_filtered, output_prefix):
     print '\n{}\n'.format('=' * 103)
 
 
-def print_info(options, config):
-
-    print '\nInput files:'
-    print '-' * 60
-    print 'Variants data file of the child: {}'.format(options.child_var)
-    print 'Variants data file of the mother: {}'.format(options.mother_var)
-    print 'Variants data file of the father: {}'.format(options.father_var)
-    print '-' * 60
-    print 'BAM file of the child: {}'.format(options.child_bam)
-    print 'BAM file of the mother: {}'.format(options.mother_bam)
-    print 'BAM file of the father: {}'.format(options.father_bam)
-    print '-' * 60
-    print 'gnomAD data file: {}'.format(config['GNOMAD_DATA_FILE'])
-    print 'Control data file: {}'.format(config['CONTROL_DATA_FILE'])
-    print 'MaxEntScan data file: {}'.format(config['MAXENTSCAN_DATA_FILE'])
-
-
 def init_progress():
 
     print ''

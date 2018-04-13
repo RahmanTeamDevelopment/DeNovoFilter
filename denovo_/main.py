@@ -13,9 +13,6 @@ def run(options, version):
     # Read configuration file
     config = parsers.read_config_file(options.config)
 
-    # Print info
-    helper.print_info(options, config)
-
     # Read variant data of the three individuals
     child_var_data = parsers.read_variant_file(options.child_var)
     mother_var_data = parsers.read_variant_file(options.mother_var)
@@ -102,4 +99,4 @@ def run(options, version):
     out_filtered.close()
 
     # Print goodbye message and information
-    helper.goodbye(counter_denovo, counter_filtered)
+    helper.goodbye(counter_denovo, counter_filtered, options.output)
