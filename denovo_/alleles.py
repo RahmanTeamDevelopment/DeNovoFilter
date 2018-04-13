@@ -15,8 +15,8 @@ def count(samfile, var_key):
     tr = 0
     for read in samfile.fetch(chrom, start, end + 1):
 
-        # Filter out optical and PCR duplicate reads
-        if read.is_duplicate:
+        # Filter out optical and PCR duplicate reads and unmapped reads
+        if read.is_duplicate or read.is_unmapped:
             continue
 
         tc += 1
