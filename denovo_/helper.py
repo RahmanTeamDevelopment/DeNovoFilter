@@ -23,8 +23,9 @@ def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, fat
         return False, []
 
     # Check gnomAD variant frequency
-    if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
-        return False, []
+    if freqs['gnomad'] != 'NA':
+        if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
+            return False, []
 
     # Check control variant frequency
     if freqs['control'] > config['CONTROL_MAX_FREQUENCY']:
@@ -86,9 +87,10 @@ def is_candidate_old(var_key, data, config, multiallelic_calls, mother_var_data,
         ret = False
 
     # Check gnomAD variant frequency
-    if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
-        reason.append('high_gnomad_frequency')
-        ret = False
+    if freqs['gnomad'] != 'NA':
+        if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
+            reason.append('high_gnomad_frequency')
+            ret = False
 
     # Check control variant frequency
     if freqs['control'] > config['CONTROL_MAX_FREQUENCY']:
@@ -344,6 +346,10 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
     pos = int(var_key[1])
     gene = csn_key[0]
     csn = csn_key[1]
+
+    if chrom not in tabix_file.contigs:
+        return 'NA'
+
     for line in tabix_file.fetch(chrom, pos - delta, pos + delta):
         line = line.strip()
         cols = line.split('\t')
