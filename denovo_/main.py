@@ -60,8 +60,8 @@ def run(options, version):
             csn_key = (data['gene'], data['csn'])
             freqs = {}
             freqs['gnomad'] = helper.read_gnomad_data(gnomad_file, var_key, csn_key)
-            if var_key in control_data:
-                freqs['control'] = control_data[var_key]
+            if csn_key in control_data:
+                freqs['control'] = control_data[csn_key]
             else:
                 freqs['control'] = 0.0
 
