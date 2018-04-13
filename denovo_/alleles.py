@@ -2,7 +2,7 @@
 def count(samfile, var_key):
 
     [chrom, pos, ref, alt] = var_key
-    pos = int(pos)
+    pos = int(pos) - 1
 
     if is_substitution(ref, alt) or is_deletion(ref, alt):
         start, end = pos, pos
