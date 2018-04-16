@@ -6,56 +6,56 @@ def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, fat
 
     # Check if variant is multiallelic
     if config['REMOVE_MULTI_ALLELE_CALLS'] and var_key[:3] in multiallelic_calls:
-        return False, []
+        return False, 'multi_allele_call'
 
     # Check if variant is called in either parent
     if var_key in mother_var_data:
-        return False, []
+        return False, 'called_in_mother'
     if var_key in father_var_data:
-        return False, []
+        return False, 'called_in_father'
 
     # Check if variant is "low" quality (as flagged by postCAVA.py)
     if data['quality'] == 'low':
-        return False, []
+        return False, 'low_quality'
 
     # Check if variant is outside splice site boundary
     if not within_splice_site_boundary(data['csn'], config['SPLICE_SITE_BOUNDARY']):
-        return False, []
+        return False, 'outside_splice_site_boundary'
 
     # Check gnomAD variant frequency
     if freqs['gnomad'] != 'NA':
         if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
-            return False, []
+            return False, 'high_gnomad_frequency'
 
     # Check control variant frequency
     if freqs['control'] > config['CONTROL_MAX_FREQUENCY']:
-        return False, []
+        return False, 'high_control_frequency'
 
     # Check TR in the child
     if data['TR'] < config['CHILD_MIN_TR']:
-        return False, []
+        return False, 'low_child_tr'
 
     # Check TC In the child
     if data['TC'] < config['CHILD_MIN_TC']:
-        return False, []
+        return False, 'low_child_tc'
 
     # Check TR/TC in the child
     if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        return False, []
+        return False, 'low_child_tr_per_tc'
 
     # Check TC and TR in the mother
     if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        return False, []
+        return False, 'low_mother_tc'
     if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return False, []
+        return False, 'high_mother_tr'
 
     # Check TC and TR in the father
     if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        return False, []
+        return False, 'low_father_tc'
     if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return False, []
+        return False, 'high_father_tr'
 
-    return True, []
+    return True, '.'
 
 
 def is_candidate_old(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, freqs, parent_alleles):

@@ -88,7 +88,7 @@ def run(options, version):
                 helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
                 counter_denovo += 1
             else:
-                helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, ';'.join(reason))
+                helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, reason)
                 counter_filtered += 1
 
     # Finalize progress info
