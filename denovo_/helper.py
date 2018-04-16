@@ -357,11 +357,10 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
 
             popmax = flags['POPMAX'].split(',')[i]
 
-            # Temporary fix:
-            if 'GC_' + popmax not in flags:
-                return 0.0
-
-            return float(frequencies(flags['GC_' + popmax], n_alts)[i])
+            if chrom in ['X', 'chrX']:
+                return float(frequencies_combined(flags['GC_' + popmax + '_Male'], flags['GC_' + popmax + '_Female'], n_alts)[i])
+            else:
+                return float(frequencies(flags['GC_' + popmax], n_alts)[i])
 
     return 0.0
 
@@ -386,4 +385,29 @@ def frequencies(gc, n_alts):
 
     return ret
 
+
+def frequencies_combined(gc_male, gc_female, n_alts):
+
+    ret = []
+
+    GCv_male = map(int, gc_male.split(','))
+    GCv_female = map(int, gc_female.split(','))
+
+    total = sum(GCv_male) + sum(GCv_female)
+
+    genotypes = []
+    for a1 in range(n_alts+1):
+        for a2 in range(a1+1):
+            genotypes.append((a1,a2))
+
+    for i in range(n_alts):
+        N_male = 0
+        N_female = 0
+        for j in range(len(genotypes)):
+            if i+1 in genotypes[j]:
+                N_male += GCv_male[j]
+                N_female += GCv_female[j]
+        ret.append(100 * (N_male + N_female) / total)
+
+    return ret
 
