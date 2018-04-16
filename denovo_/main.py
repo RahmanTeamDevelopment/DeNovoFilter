@@ -56,39 +56,26 @@ def run(options, version):
             # Print progress info
             helper.print_progress(counter, len(child_var_data))
 
-            # Variant frequencies
-            csn_key = (data['gene'], data['csn'])
-            freqs = {}
-            freqs['gnomad'] = helper.read_gnomad_data(gnomad_file, var_key, csn_key)
-            if csn_key in control_data:
-                freqs['control'] = control_data[csn_key]
-            else:
-                freqs['control'] = 0.0
-
-            # Allele counts in the parents
-            parent_alleles = {}
-            parent_alleles['mother_tc'], parent_alleles['mother_tr'] = alleles.count(mother_bam, var_key)
-            parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
-
             # MaxEntScan scores of the variant
             maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
 
             # Check if variant is a de novo candidate and output to file
-            is_candidate, reason = helper.is_candidate(
+            is_candidate, reason, freqs, parent_alleles = helper.is_candidate(
                     var_key,
                     data,
                     config,
                     multiallelic_calls,
                     mother_var_data,
                     father_var_data,
-                    freqs,
-                    parent_alleles
+                    gnomad_file,
+                    control_data,
+                    mother_bam,
+                    father_bam
             )
             if is_candidate:
                 helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
                 counter_denovo += 1
             else:
-                helper.output(out_filtered, var_key, data, freqs, parent_alleles, maxentscan_scores, reason)
                 counter_filtered += 1
 
     # Finalize progress info
