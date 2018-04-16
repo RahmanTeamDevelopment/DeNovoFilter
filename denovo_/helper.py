@@ -359,6 +359,8 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
 
             if chrom in ['X', 'chrX']:
                 return float(frequencies_combined(flags['GC_' + popmax + '_Male'], flags['GC_' + popmax + '_Female'], n_alts)[i])
+            elif chrom in ['Y', 'chrY']:
+                return float(flags['AF_' + popmax].split(',')[i])
             else:
                 return float(frequencies(flags['GC_' + popmax], n_alts)[i])
 
