@@ -350,6 +350,61 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
             v = x[x.find('=') + 1:]
             flags[k] = v
 
+
+        for i in range(n_alts):
+
+            if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
+                    continue
+
+            popfreqs = []
+            for pop in ['AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']:
+
+                key = 'GC_' + pop
+
+                if chrom in ['X', 'chrX']:
+                    popfreqs.append(float(frequencies_combined(flags[key + '_Male'], flags[key + '_Female'], n_alts)[i]))
+
+                elif chrom in ['Y', 'chrY']:
+                    popfreqs.append(float(flags['AF_' + pop].split(',')[i]))
+
+                else:
+                    popfreqs.append(float(frequencies(flags[key], n_alts)[i]))
+
+            if len(popfreqs) > 0:
+                return max(popfreqs)
+
+    return 0.0
+
+
+def read_gnomad_data_OLD(tabix_file, var_key, csn_key):
+
+    delta = 100
+
+    chrom = var_key[0]
+    pos = int(var_key[1])
+    gene = csn_key[0]
+    csn = csn_key[1]
+
+    if chrom not in tabix_file.contigs:
+        return 'NA'
+
+    for line in tabix_file.fetch(chrom, pos - delta, pos + delta):
+        line = line.strip()
+        cols = line.split('\t')
+
+        if cols[6] != 'PASS':
+            continue
+
+        n_alts = len(cols[4].split(','))
+
+        flags = {}
+        for x in cols[7].split(';'):
+            if '=' not in x:
+                continue
+            k = x[:x.find('=')]
+            v = x[x.find('=') + 1:]
+            flags[k] = v
+
         for i in range(n_alts):
 
             if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
