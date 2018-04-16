@@ -428,6 +428,9 @@ def frequencies(gc, n_alts):
 
     GCv = map(int, gc.split(','))
 
+    if sum(GCv) == 0:
+        return [0.0] * n_alts
+
     genotypes = []
     for a1 in range(n_alts+1):
         for a2 in range(a1+1):
@@ -451,6 +454,9 @@ def frequencies_combined(gc_male, gc_female, n_alts):
     GCv_female = map(int, gc_female.split(','))
 
     total = sum(GCv_male) + sum(GCv_female)
+
+    if total == 0:
+        return [0.0] * n_alts
 
     genotypes = []
     for a1 in range(n_alts+1):
