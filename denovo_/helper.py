@@ -56,13 +56,13 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
     # Check TC and TR in the mother
     if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
         return 'low_mother_tc ({})'.format(parent_alleles['mother_tc'])
-    if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
+    if parent_alleles['mother_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
         return 'high_mother_tr ({})'.format(parent_alleles['mother_tr'])
 
     # Check TC and TR in the father
     if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
         return 'low_father_tc ({})'.format(parent_alleles['father_tc'])
-    if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
+    if parent_alleles['father_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
         return 'high_father_tr ({})'.format(parent_alleles['father_tr'])
 
     return control_freq, gnomad_freq, parent_alleles
