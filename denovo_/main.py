@@ -72,7 +72,7 @@ def run(options, version):
                 # MaxEntScan scores of the variant
                 maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
 
-                helper.output(out_denovo, var_key, data, result[0], result[1], result[2], maxentscan_scores, '.')
+                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], maxentscan_scores, '.')
                 counter_denovo += 1
 
             else:
