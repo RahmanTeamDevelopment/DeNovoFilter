@@ -34,8 +34,7 @@ def run(options, version):
     # Initialize output files
     out_denovo = open('{}_denovo_candidates.txt'.format(options.output), 'w')
     helper.output_header(out_denovo, config['MAXENTSCAN_DATA_FILE'] != '')
-    out_filtered = open('{}_filtered.txt'.format(options.output), 'w')
-    helper.output_header(out_filtered, config['MAXENTSCAN_DATA_FILE'] != '')
+    out_filtered = open('{}_filtered_out.txt'.format(options.output), 'w')
 
     # Initialize counters
     counter = 0
@@ -55,7 +54,7 @@ def run(options, version):
             # Print progress info
             helper.print_progress(counter, len(child_var_data))
 
-            result = helper.reason_to_exlude(
+            res = helper.check(
                 var_key,
                 data,
                 config,
@@ -68,7 +67,7 @@ def run(options, version):
                 father_bam
             )
 
-            if type(result) == tuple:
+            if type(res) == tuple:
 
                 # MaxEntScan scores of the variant
                 maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
@@ -77,6 +76,20 @@ def run(options, version):
                 counter_denovo += 1
 
             else:
+
+                out_filtered.write(
+                    '\t'.join(
+                        [
+                            var_key[0],
+                            var_key[1],
+                            var_key[2],
+                            var_key[3],
+                            data['gene'],
+                            data['csn'],
+                            res
+                        ]
+                    ) + '\n'
+                )
                 counter_filtered += 1
 
     # Finalize progress info

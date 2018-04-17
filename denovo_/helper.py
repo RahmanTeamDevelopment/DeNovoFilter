@@ -3,7 +3,7 @@ import sys
 import alleles
 
 
-def reason_to_exlude(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_file, control_data, mother_bam, father_bam):
+def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_file, control_data, mother_bam, father_bam):
 
     csn_key = (data['gene'], data['csn'])
 
