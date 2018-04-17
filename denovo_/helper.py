@@ -2,146 +2,89 @@ from __future__ import division
 import sys
 import alleles
 
-def is_candidate(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_file, control_data, mother_bam, father_bam):
 
-    # Check if variant is multiallelic
-    if config['REMOVE_MULTI_ALLELE_CALLS'] and var_key[:3] in multiallelic_calls:
-        return False, 'multi_allele_call', None, None
-
-    # Check if variant is called in either parent
-    if var_key in mother_var_data:
-        return False, 'called_in_mother', None, None
-    if var_key in father_var_data:
-        return False, 'called_in_father', None, None
-
-    # Check if variant is "low" quality (as flagged by postCAVA.py)
-    if data['quality'] == 'low':
-        return False, 'low_quality', None, None
-
-    # Check if variant is outside splice site boundary
-    if not within_splice_site_boundary(data['csn'], config['SPLICE_SITE_BOUNDARY']):
-        return False, 'outside_splice_site_boundary', None, None
-
-    # Check TR in the child
-    if data['TR'] < config['CHILD_MIN_TR']:
-        return False, 'low_child_tr', None, None
-
-    # Check TC In the child
-    if data['TC'] < config['CHILD_MIN_TC']:
-        return False, 'low_child_tc', None, None
-
-    # Check TR/TC in the child
-    if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        return False, 'low_child_tr_per_tc', None, None
+def reason_to_exlude(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_file, control_data, mother_bam, father_bam):
 
     csn_key = (data['gene'], data['csn'])
-    freqs = {}
-    freqs['gnomad'] = read_gnomad_data(gnomad_file, var_key, csn_key)
-    if csn_key in control_data:
-        freqs['control'] = control_data[csn_key]
-    else:
-        freqs['control'] = 0.0
-
-    # Check gnomAD variant frequency
-    if freqs['gnomad'] != 'NA':
-        if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
-            return False, 'high_gnomad_frequency', None, None
-
-    # Check control variant frequency
-    if freqs['control'] > config['CONTROL_MAX_FREQUENCY']:
-        return False, 'high_control_frequency', None, None
-
-    # Allele counts in the parents
-    parent_alleles = {}
-    parent_alleles['mother_tc'], parent_alleles['mother_tr'] = alleles.count(mother_bam, var_key)
-    parent_alleles['father_tc'], parent_alleles['father_tr'] = alleles.count(father_bam, var_key)
-
-    # Check TC and TR in the mother
-    if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        return False, 'low_mother_tc', None, None
-    if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return False, 'high_mother_tr', None, None
-
-    # Check TC and TR in the father
-    if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        return False, 'low_father_tc', None, None
-    if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return False, 'high_father_tr', None, None
-
-    return True, '.', freqs, parent_alleles
-
-
-def is_candidate_old(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, freqs, parent_alleles):
-
-    ret = True
-    reason = []
 
     # Check if variant is multiallelic
     if config['REMOVE_MULTI_ALLELE_CALLS'] and var_key[:3] in multiallelic_calls:
-        reason.append('multiallelic_call')
-        ret = False
+        return 'multi_allele_call'
 
     # Check if variant is called in either parent
-    if var_key in mother_var_data:
-        reason.append('found_in_mother')
-        ret = False
-    if var_key in father_var_data:
-        reason.append('found_in_father')
-        ret = False
+    if var_key in mother_var_data or var_key in father_var_data:
+        return 'called_in_parent'
 
     # Check if variant is "low" quality (as flagged by postCAVA.py)
     if data['quality'] == 'low':
-        reason.append('low_quality')
-        ret = False
+        return 'low_quality'
 
     # Check if variant is outside splice site boundary
     if not within_splice_site_boundary(data['csn'], config['SPLICE_SITE_BOUNDARY']):
-        reason.append('outside_splice_site_boundary')
-        ret = False
-
-    # Check gnomAD variant frequency
-    if freqs['gnomad'] != 'NA':
-        if freqs['gnomad'] > config['GNOMAD_MAX_FREQUENCY']:
-            reason.append('high_gnomad_frequency')
-            ret = False
-
-    # Check control variant frequency
-    if freqs['control'] > config['CONTROL_MAX_FREQUENCY']:
-        reason.append('high_control_frequency')
-        ret = False
+        return 'outside_splice_site_boundary'
 
     # Check TR in the child
     if data['TR'] < config['CHILD_MIN_TR']:
-        reason.append('low_child_tr')
-        ret = False
+        return 'low_child_tr'
 
     # Check TC In the child
     if data['TC'] < config['CHILD_MIN_TC']:
-        reason.append('low_child_tc')
-        ret = False
+        return 'low_child_tc'
 
     # Check TR/TC in the child
     if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        reason.append('low_child_tr_per_tc')
-        ret = False
+        return 'low_child_tr_per_tc'
+
+    # Calculate control frequency
+    control_freq = control_data[csn_key] if csn_key in control_data else 0.0
+
+    # Check control variant frequency
+    if control_freq > config['CONTROL_MAX_FREQUENCY']:
+        return 'high_control_frequency'
+
+    # Calculate gnomAD frequency
+    gnomad_freq = read_gnomad_data(gnomad_file, var_key, csn_key)
+
+    # Check gnomAD variant frequency
+    if gnomad_freq != 'NA':
+        if gnomad_freq > config['GNOMAD_MAX_FREQUENCY']:
+            return 'high_gnomad_frequency'
+
+    # Count alleles in parents
+    parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
 
     # Check TC and TR in the mother
     if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        reason.append('low_mother_tc')
-        ret = False
+        return 'low_mother_tc'
     if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        reason.append('high_mother_tr')
-        ret = False
+        return 'high_mother_tr'
 
     # Check TC and TR in the father
     if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        reason.append('low_father_tc')
-        ret = False
+        return 'low_father_tc'
     if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        reason.append('high_father_tr')
-        ret = False
+        return 'high_father_tr'
 
-    return ret, reason
+    return control_freq, gnomad_freq, parent_alleles
+
+
+def count_parent_alleles(mother_bam, father_bam, var_key):
+
+    ret = {}
+    ret['mother_tc'], ret['mother_tr'] = alleles.count(mother_bam, var_key)
+    ret['father_tc'], ret['father_tr'] = alleles.count(father_bam, var_key)
+    return ret
+
+
+def frequencies(gnomad_file, control_data, var_key, csn_key):
+
+    ret = {}
+    ret['gnomad'] = read_gnomad_data(gnomad_file, var_key, csn_key)
+    if csn_key in control_data:
+        ret['control'] = control_data[csn_key]
+    else:
+        ret['control'] = 0.0
+    return ret
 
 
 def find_multiallelic_calls(var_data):
@@ -244,7 +187,7 @@ def output_header(outfile, maxentscan_columns):
     outfile.write('\t'.join(header)+'\n')
 
 
-def output(outfile, var_key, data, freqs, parent_alleles, maxentscan_scores, reason):
+def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, maxentscan_scores, reason):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -258,8 +201,8 @@ def output(outfile, var_key, data, freqs, parent_alleles, maxentscan_scores, rea
         data['class_'],
         data['altann'],
         data['altclass'],
-        freqs['gnomad'],
-        freqs['control'],
+        gnomad_freq,
+        control_freq,
         data['TR'],
         data['TC'],
         parent_alleles['mother_tr'],

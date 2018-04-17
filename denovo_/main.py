@@ -2,7 +2,6 @@ import parsers
 import helper
 import maxentscan
 import pysam
-import alleles
 
 
 def run(options, version):
@@ -56,25 +55,27 @@ def run(options, version):
             # Print progress info
             helper.print_progress(counter, len(child_var_data))
 
-            # MaxEntScan scores of the variant
-            maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
-
-            # Check if variant is a de novo candidate and output to file
-            is_candidate, reason, freqs, parent_alleles = helper.is_candidate(
-                    var_key,
-                    data,
-                    config,
-                    multiallelic_calls,
-                    mother_var_data,
-                    father_var_data,
-                    gnomad_file,
-                    control_data,
-                    mother_bam,
-                    father_bam
+            result = helper.reason_to_exlude(
+                var_key,
+                data,
+                config,
+                multiallelic_calls,
+                mother_var_data,
+                father_var_data,
+                gnomad_file,
+                control_data,
+                mother_bam,
+                father_bam
             )
-            if is_candidate:
-                helper.output(out_denovo, var_key, data, freqs, parent_alleles, maxentscan_scores, '.')
+
+            if type(result) == tuple:
+
+                # MaxEntScan scores of the variant
+                maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
+
+                helper.output(out_denovo, var_key, data, result[0], result[1], result[2], maxentscan_scores, '.')
                 counter_denovo += 1
+
             else:
                 counter_filtered += 1
 
