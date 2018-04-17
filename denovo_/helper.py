@@ -25,22 +25,22 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
 
     # Check TR in the child
     if data['TR'] < config['CHILD_MIN_TR']:
-        return 'low_child_tr'
+        return 'low_child_tr ({})'.format(data['TR'])
 
     # Check TC In the child
     if data['TC'] < config['CHILD_MIN_TC']:
-        return 'low_child_tc'
+        return 'low_child_tc ({})'.format(data['TC'])
 
     # Check TR/TC in the child
     if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        return 'low_child_tr_per_tc'
+        return 'low_child_tr_per_tc ({})'.format(data['TR'] / data['TC'])
 
     # Calculate control frequency
     control_freq = control_data[csn_key] if csn_key in control_data else 0.0
 
     # Check control variant frequency
     if control_freq > config['CONTROL_MAX_FREQUENCY']:
-        return 'high_control_frequency'
+        return 'high_control_frequency ({})'.format(control_freq)
 
     # Calculate gnomAD frequency
     gnomad_freq = read_gnomad_data(gnomad_file, var_key, csn_key)
@@ -48,22 +48,22 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
     # Check gnomAD variant frequency
     if gnomad_freq != 'NA':
         if gnomad_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return 'high_gnomad_frequency'
+            return 'high_gnomad_frequency ({})'.format(gnomad_freq)
 
     # Count alleles in parents
     parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
 
     # Check TC and TR in the mother
     if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        return 'low_mother_tc'
+        return 'low_mother_tc ({})'.format(parent_alleles['mother_tc'])
     if parent_alleles['mother_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return 'high_mother_tr'
+        return 'high_mother_tr ({})'.format(parent_alleles['mother_tr'])
 
     # Check TC and TR in the father
     if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        return 'low_father_tc'
+        return 'low_father_tc ({})'.format(parent_alleles['father_tc'])
     if parent_alleles['father_tr'] >= config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return 'high_father_tr'
+        return 'high_father_tr ({})'.format(parent_alleles['father_tr'])
 
     return control_freq, gnomad_freq, parent_alleles
 
