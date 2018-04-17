@@ -1,9 +1,10 @@
 from __future__ import division
+from collections import OrderedDict
 
 
 def read_variant_file(fn):
 
-    ret = {}
+    ret = OrderedDict()
 
     with open(fn) as f:
         for line in f:
