@@ -142,7 +142,7 @@ def _split_to_exon_and_intron_coordinates(coord_part):
     return exonpart, intronpart
 
 
-def output_header(outfile, maxentscan_columns):
+def output_header(outfile, maxentscan_columns, exac_columns):
 
     header = [
         'CHROM',
@@ -183,11 +183,21 @@ def output_header(outfile, maxentscan_columns):
             'MaxEntScan_MAX5',
             'MaxEntScan_MAX3'
         ]
-    header += ['Flags']
+
+    if exac_columns:
+        header += [
+            'ExAC_N_missense',
+            'ExAC_Exp_missense',
+            'ExAC_Z_missense',
+            'ExAC_N_lof',
+            'ExAC_Exp_lof',
+            'ExAC_pLI',
+        ]
+
     outfile.write('\t'.join(header)+'\n')
 
 
-def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, maxentscan_scores, reason):
+def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, maxentscan_scores, exac_values):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -237,7 +247,20 @@ def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, ma
         else:
             record += ['.'] * len(maxentscan_columns)
 
-    record += [reason]
+    if exac_values is not None:
+        exac_columns = [
+            'N_missense',
+            'Exp_missense',
+            'Z_missense',
+            'N_lof',
+            'Exp_lof',
+            'pLI',
+        ]
+        if exac_values != {}:
+            for c in exac_columns:
+                record.append(exac_values[c])
+        else:
+            record += ['.'] * len(exac_columns)
 
     record = map(str, record)
     outfile.write('\t'.join(record)+'\n')

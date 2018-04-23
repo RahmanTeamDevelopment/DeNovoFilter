@@ -37,7 +37,10 @@ class MaxEntScanData(object):
     def get_scores(self, key):
 
         if not (len(key[2]) == 1 and len(key[3]) == 1):
-            return None
+            return {}
+
+        if key not in self.data:
+            return {}
 
         ret = {}
 

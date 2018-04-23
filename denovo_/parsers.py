@@ -45,7 +45,8 @@ def read_config_file(fn):
         'REMOVE_MULTI_ALLELE_CALLS': 'true',
         'GNOMAD_DATA_FILE': '',
         'CONTROL_DATA_FILE': '',
-        'MAXENTSCAN_DATA_FILE': ''
+        'MAXENTSCAN_DATA_FILE': '',
+        'EXAC_DATA_FILE': ''
     }
 
     if fn is not None:
@@ -145,3 +146,23 @@ def read_custom_database_file(fn):
 
     return ret
 
+
+def read_exac_data_file(fn):
+
+    ret = {}
+    with open(fn) as f:
+        for line in f:
+            line = line.strip()
+            if 'N_missense' in line or line == '':
+                continue
+            cols = line.split('\t')
+
+            ret[cols[0]] = {
+                'N_missense': int(cols[1]),
+                'Exp_missense': float(cols[2]),
+                'Z_missense': float(cols[3]),
+                'N_lof': int(cols[4]),
+                'Exp_lof': float(cols[5]),
+                'pLI': float(cols[6]),
+            }
+    return ret

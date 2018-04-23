@@ -31,9 +31,12 @@ def run(options, version):
     # Read MaxEntScan data
     maxentscan_data = maxentscan.MaxEntScanData(config['MAXENTSCAN_DATA_FILE']) if config['MAXENTSCAN_DATA_FILE'] != '' else None
 
+    # Read ExAC data
+    exac_data = parsers.read_exac_data_file(config['EXAC_DATA_FILE']) if config['EXAC_DATA_FILE'] != '' else None
+
     # Initialize output files
     out_denovo = open('{}_denovo_candidates.txt'.format(options.output), 'w')
-    helper.output_header(out_denovo, config['MAXENTSCAN_DATA_FILE'] != '')
+    helper.output_header(out_denovo, config['MAXENTSCAN_DATA_FILE'] != '', config['EXAC_DATA_FILE'] != '')
     out_filtered = open('{}_filtered_out.txt'.format(options.output), 'w')
 
     # Initialize counters
@@ -72,7 +75,14 @@ def run(options, version):
                 # MaxEntScan scores of the variant
                 maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
 
-                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], maxentscan_scores, '.')
+                # ExAC column values of the variant
+                if exac_data is None:
+                    exac_values = None
+                else:
+                    gene = data['gene']
+                    exac_values = exac_data[gene] if gene in exac_data else {}
+
+                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], maxentscan_scores, exac_values)
                 counter_denovo += 1
 
             else:
