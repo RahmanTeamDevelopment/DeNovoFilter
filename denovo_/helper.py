@@ -3,7 +3,7 @@ import sys
 import alleles
 
 
-def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_file, control_data, mother_bam, father_bam):
+def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_file, gnomad_genomes_file, control_data, mother_bam, father_bam):
 
     csn_key = (data['gene'], data['csn'])
 
@@ -42,13 +42,19 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
     if control_freq > config['CONTROL_MAX_FREQUENCY']:
         return 'high_control_frequency ({})'.format(control_freq)
 
-    # Calculate gnomAD frequency
-    gnomad_freq = read_gnomad_data(gnomad_file, var_key, csn_key)
+    # Calculate gnomAD frequencies
+    gnomad_exomes_freq = read_gnomad_data(gnomad_exomes_file, var_key, csn_key)
+    gnomad_genomes_freq = read_gnomad_data(gnomad_genomes_file, var_key, csn_key)
 
-    # Check gnomAD variant frequency
-    if gnomad_freq != 'NA':
-        if gnomad_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return 'high_gnomad_frequency ({})'.format(gnomad_freq)
+    # Check gnomAD exomes variant frequency
+    if gnomad_exomes_freq != 'NA':
+        if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
+            return 'high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq)
+
+    # Check gnomAD genomes variant frequency
+    if gnomad_genomes_freq != 'NA':
+        if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
+            return 'high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq)
 
     # Count alleles in parents
     parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
@@ -65,7 +71,7 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
     if parent_alleles['father_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
         return 'high_father_tr ({})'.format(parent_alleles['father_tr'])
 
-    return control_freq, gnomad_freq, parent_alleles
+    return control_freq, gnomad_exomes_freq, gnomad_genomes_freq, parent_alleles
 
 
 def count_parent_alleles(mother_bam, father_bam, var_key):
@@ -154,7 +160,8 @@ def output_header(outfile, maxentscan_columns, exac_columns):
         'CLASS',
         'ALTANN',
         'ALTCLASS',
-        'gnomAD_frequency',
+        'gnomAD_exomes_frequency',
+        'gnomAD_genomes_frequency',
         'Control_frequency',
         'Child_TR',
         'Child_TC',
@@ -197,7 +204,7 @@ def output_header(outfile, maxentscan_columns, exac_columns):
     outfile.write('\t'.join(header)+'\n')
 
 
-def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, maxentscan_scores, exac_values):
+def output(outfile, var_key, data, control_freq, gnomad_exomes_freq, gnomad_genomes_freq, parent_alleles, maxentscan_scores, exac_values):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -211,7 +218,8 @@ def output(outfile, var_key, data, control_freq, gnomad_freq, parent_alleles, ma
         data['class_'],
         data['altann'],
         data['altclass'],
-        gnomad_freq,
+        gnomad_exomes_freq,
+        gnomad_genomes_freq,
         control_freq,
         data['TR'],
         data['TC'],

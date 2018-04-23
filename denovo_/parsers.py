@@ -43,7 +43,8 @@ def read_config_file(fn):
         'PARENT_MIN_COVERAGE': 6,
         'PARENT_MAX_ALT_ALLELE_COUNT': 1,
         'REMOVE_MULTI_ALLELE_CALLS': 'true',
-        'GNOMAD_DATA_FILE': '',
+        'GNOMAD_EXOMES_DATA_FILE': '',
+        'GNOMAD_GENOMES_DATA_FILE': '',
         'CONTROL_DATA_FILE': '',
         'MAXENTSCAN_DATA_FILE': '',
         'EXAC_DATA_FILE': ''

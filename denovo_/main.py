@@ -25,7 +25,8 @@ def run(options, version):
     father_bam = pysam.AlignmentFile(options.father_bam, "rb")
 
     # Connect to gnomAD and control database files
-    gnomad_file = pysam.Tabixfile(config['GNOMAD_DATA_FILE'])
+    gnomad_exomes_file = pysam.Tabixfile(config['GNOMAD_EXOMES_DATA_FILE'])
+    gnomad_genomes_file = pysam.Tabixfile(config['GNOMAD_GENOMES_DATA_FILE'])
     control_data = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
 
     # Read MaxEntScan data
@@ -64,7 +65,8 @@ def run(options, version):
                 multiallelic_calls,
                 mother_var_data,
                 father_var_data,
-                gnomad_file,
+                gnomad_exomes_file,
+                gnomad_genomes_file,
                 control_data,
                 mother_bam,
                 father_bam
@@ -82,7 +84,7 @@ def run(options, version):
                     gene = data['gene']
                     exac_values = exac_data[gene] if gene in exac_data else {}
 
-                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], maxentscan_scores, exac_values)
+                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], res[3], maxentscan_scores, exac_values)
                 counter_denovo += 1
 
             else:
