@@ -16,6 +16,7 @@ parser.add_option("--child_bam", default=None, dest='child_bam', action='store',
 parser.add_option("--mother_bam", default=None, dest='mother_bam', action='store',help="BAM file of the mother")
 parser.add_option("--father_bam", default=None, dest='father_bam', action='store',help="BAM file of the father")
 parser.add_option("--config", default=None, dest='config', action='store',help="Configuration file")
+parser.add_option("--full_details", default=False, dest='full_details', action='store_true', help="Output full details")
 parser.add_option('-o', "--output", default=None, dest='output', action='store', help="Output filename prefix")
 (options, args) = parser.parse_args()
 

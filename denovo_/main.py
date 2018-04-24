@@ -58,7 +58,9 @@ def run(options, version):
             # Print progress info
             helper.print_progress(counter, len(child_var_data))
 
-            res = helper.check(
+            check = helper.check_fast if not options.full_details else helper.check_slow
+
+            result = check(
                 var_key,
                 data,
                 config,
@@ -72,7 +74,7 @@ def run(options, version):
                 father_bam
             )
 
-            if type(res) == dict:
+            if result['filter'] is None:
 
                 # MaxEntScan scores of the variant
                 maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
@@ -84,24 +86,16 @@ def run(options, version):
                     gene = data['gene']
                     exac_values = exac_data[gene] if gene in exac_data else {}
 
-                helper.output(out_denovo, var_key, data, res, maxentscan_scores, exac_values)
+                helper.output(out_denovo, var_key, data, result, maxentscan_scores, exac_values)
                 counter_denovo += 1
 
             else:
 
-                out_filtered.write(
-                    '\t'.join(
-                        [
-                            var_key[0],
-                            var_key[1],
-                            var_key[2],
-                            var_key[3],
-                            data['gene'],
-                            data['csn'],
-                            res
-                        ]
-                    ) + '\n'
-                )
+                if options.full_details:
+                    helper.output(out_filtered, var_key, data, result, maxentscan_scores, exac_values)
+                else:
+                    helper.output_simple(out_filtered, var_key, data, result)
+
                 counter_filtered += 1
 
     # Finalize progress info
