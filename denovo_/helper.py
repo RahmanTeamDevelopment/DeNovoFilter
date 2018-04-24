@@ -43,8 +43,8 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
         return 'high_control_frequency ({})'.format(control_freq)
 
     # Calculate gnomAD frequencies
-    gnomad_exomes_freq = read_gnomad_data(gnomad_exomes_file, var_key, csn_key)
-    gnomad_genomes_freq = read_gnomad_data(gnomad_genomes_file, var_key, csn_key)
+    gnomad_exomes_freq, pop_gnomad_exomes = read_gnomad_data(gnomad_exomes_file, var_key, csn_key)
+    gnomad_genomes_freq, pop_gnomad_genomes = read_gnomad_data(gnomad_genomes_file, var_key, csn_key)
 
     # Check gnomAD exomes variant frequency
     if gnomad_exomes_freq != 'NA':
@@ -71,7 +71,16 @@ def check(var_key, data, config, multiallelic_calls, mother_var_data, father_var
     if parent_alleles['father_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
         return 'high_father_tr ({})'.format(parent_alleles['father_tr'])
 
-    return control_freq, gnomad_exomes_freq, gnomad_genomes_freq, parent_alleles
+    ret = {
+        'control_freq': control_freq,
+        'gnomad_exomes_freq': gnomad_exomes_freq,
+        'gnomad_genomes_freq': gnomad_genomes_freq,
+        'parent_alleles': parent_alleles,
+        'pop_gnomad_exomes': pop_gnomad_exomes,
+        'pop_gnomad_genomes': pop_gnomad_genomes
+    }
+
+    return ret
 
 
 def count_parent_alleles(mother_bam, father_bam, var_key):
@@ -161,7 +170,9 @@ def output_header(outfile, maxentscan_columns, exac_columns):
         'ALTANN',
         'ALTCLASS',
         'gnomAD_exomes_frequency',
+        'Popuplation_gnomAD_exomes',
         'gnomAD_genomes_frequency',
+        'Popuplation_gnomAD_genomes',
         'Control_frequency',
         'Child_TR',
         'Child_TC',
@@ -204,7 +215,7 @@ def output_header(outfile, maxentscan_columns, exac_columns):
     outfile.write('\t'.join(header)+'\n')
 
 
-def output(outfile, var_key, data, control_freq, gnomad_exomes_freq, gnomad_genomes_freq, parent_alleles, maxentscan_scores, exac_values):
+def output(outfile, var_key, data, res, maxentscan_scores, exac_values):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -218,15 +229,17 @@ def output(outfile, var_key, data, control_freq, gnomad_exomes_freq, gnomad_geno
         data['class_'],
         data['altann'],
         data['altclass'],
-        gnomad_exomes_freq,
-        gnomad_genomes_freq,
-        control_freq,
+        res['gnomad_exomes_freq'],
+        res['pop_gnomad_exomes'],
+        res['gnomad_genomes_freq'],
+        res['pop_gnomad_genomes'],
+        res['control_freq'],
         data['TR'],
         data['TC'],
-        parent_alleles['mother_tr'],
-        parent_alleles['mother_tc'],
-        parent_alleles['father_tr'],
-        parent_alleles['father_tc']
+        res['parent_alleles']['mother_tr'],
+        res['parent_alleles']['mother_tc'],
+        res['parent_alleles']['father_tr'],
+        res['parent_alleles']['father_tc']
     ]
 
     if maxentscan_scores is not None:
@@ -344,7 +357,8 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
                     continue
 
             popfreqs = []
-            for pop in ['AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']:
+            pops = ['AFR', 'AMR', 'ASJ', 'EAS', 'FIN', 'NFE', 'OTH', 'SAS']
+            for pop in pops:
 
                 key = 'GC_' + pop
 
@@ -358,7 +372,7 @@ def read_gnomad_data(tabix_file, var_key, csn_key):
                     popfreqs.append(float(frequencies(flags[key], n_alts)[i]))
 
             if len(popfreqs) > 0:
-                return max(popfreqs)
+                return max(popfreqs), pops[popfreqs.index(max(popfreqs))]
 
     return 0.0
 

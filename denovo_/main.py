@@ -72,7 +72,7 @@ def run(options, version):
                 father_bam
             )
 
-            if type(res) == tuple:
+            if type(res) == dict:
 
                 # MaxEntScan scores of the variant
                 maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
@@ -84,7 +84,7 @@ def run(options, version):
                     gene = data['gene']
                     exac_values = exac_data[gene] if gene in exac_data else {}
 
-                helper.output(out_denovo, var_key, data, res[0], res[1], res[2], res[3], maxentscan_scores, exac_values)
+                helper.output(out_denovo, var_key, data, res, maxentscan_scores, exac_values)
                 counter_denovo += 1
 
             else:
