@@ -47,12 +47,12 @@ def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, fathe
     gnomad_genomes_freq, pop_gnomad_genomes = gnomad_genomes_reader.get_max_frequency(var_key, csn_key)
 
     # Check gnomAD exomes variant frequency
-    if gnomad_exomes_freq is not None:
+    if pop_gnomad_exomes != '.':
         if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             return {'filter': 'high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq)}
 
     # Check gnomAD genomes variant frequency
-    if gnomad_genomes_freq is not None:
+    if pop_gnomad_genomes != '.':
         if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             return {'filter': 'high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq)}
 
@@ -250,9 +250,9 @@ def output_header(outfile, maxentscan_columns, exac_columns):
         'ALTANN',
         'ALTCLASS',
         'gnomAD_exomes_frequency',
-        'Popuplation_gnomAD_exomes',
+        'Population_gnomAD_exomes',
         'gnomAD_genomes_frequency',
-        'Popuplation_gnomAD_genomes',
+        'Population_gnomAD_genomes',
         'Control_frequency',
         'Child_TR',
         'Child_TC',

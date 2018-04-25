@@ -40,7 +40,7 @@ class GnomadDBReader(object):
 
                 return maxfreq, pops[popfreqs.index(maxfreq)]
 
-        return None, None
+        return 0.0, '.'
 
 
     def _read_variants_in_vicinity(self, chrom, pos, delta=100):
