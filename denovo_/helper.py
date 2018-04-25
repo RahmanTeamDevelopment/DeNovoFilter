@@ -3,7 +3,7 @@ import sys
 import alleles
 
 
-def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_file, gnomad_genomes_file, control_data, mother_bam, father_bam):
+def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_reader, gnomad_genomes_reader, control_data, mother_bam, father_bam):
 
     csn_key = (data['gene'], data['csn'])
 
@@ -43,16 +43,16 @@ def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, fathe
         return {'filter': 'high_control_frequency ({})'.format(control_freq)}
 
     # Calculate gnomAD frequencies
-    gnomad_exomes_freq, pop_gnomad_exomes = read_gnomad_data(gnomad_exomes_file, var_key, csn_key)
-    gnomad_genomes_freq, pop_gnomad_genomes = read_gnomad_data(gnomad_genomes_file, var_key, csn_key)
+    gnomad_exomes_freq, pop_gnomad_exomes = gnomad_exomes_reader.get_max_frequency(var_key, csn_key)
+    gnomad_genomes_freq, pop_gnomad_genomes = gnomad_genomes_reader.get_max_frequency(var_key, csn_key)
 
     # Check gnomAD exomes variant frequency
-    if gnomad_exomes_freq != 'NA':
+    if gnomad_exomes_freq is not None:
         if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             return {'filter': 'high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq)}
 
     # Check gnomAD genomes variant frequency
-    if gnomad_genomes_freq != 'NA':
+    if gnomad_genomes_freq is not None:
         if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             return {'filter': 'high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq)}
 
@@ -82,7 +82,7 @@ def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, fathe
     }
 
 
-def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_file, gnomad_genomes_file, control_data, mother_bam, father_bam):
+def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_reader, gnomad_genomes_reader, control_data, mother_bam, father_bam):
 
     csn_key = (data['gene'], data['csn'])
 
@@ -124,16 +124,16 @@ def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, fathe
         filter.append('high_control_frequency ({})'.format(control_freq))
 
     # Calculate gnomAD frequencies
-    gnomad_exomes_freq, pop_gnomad_exomes = read_gnomad_data(gnomad_exomes_file, var_key, csn_key)
-    gnomad_genomes_freq, pop_gnomad_genomes = read_gnomad_data(gnomad_genomes_file, var_key, csn_key)
+    gnomad_exomes_freq, pop_gnomad_exomes = gnomad_exomes_reader.get_max_frequency(var_key, csn_key)
+    gnomad_genomes_freq, pop_gnomad_genomes = gnomad_genomes_reader.get_max_frequency(var_key, csn_key)
 
     # Check gnomAD exomes variant frequency
-    if gnomad_exomes_freq != 'NA':
+    if gnomad_exomes_freq is not None:
         if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             filter.append('high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq))
 
     # Check gnomAD genomes variant frequency
-    if gnomad_genomes_freq != 'NA':
+    if gnomad_genomes_freq is not None:
         if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
             filter.append('high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq))
 

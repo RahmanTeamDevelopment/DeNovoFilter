@@ -1,6 +1,7 @@
 import parsers
 import helper
 import maxentscan
+import gnomad
 import pysam
 
 
@@ -24,9 +25,11 @@ def run(options, version):
     mother_bam = pysam.AlignmentFile(options.mother_bam, "rb")
     father_bam = pysam.AlignmentFile(options.father_bam, "rb")
 
-    # Connect to gnomAD and control database files
-    gnomad_exomes_file = pysam.Tabixfile(config['GNOMAD_EXOMES_DATA_FILE'])
-    gnomad_genomes_file = pysam.Tabixfile(config['GNOMAD_GENOMES_DATA_FILE'])
+    # Create GnomadDBReader objects for both gnomAD exomes and genomes
+    gnomad_exomes_reader = gnomad.GnomadDBReader(config['GNOMAD_EXOMES_DATA_FILE'])
+    gnomad_genomes_reader = gnomad.GnomadDBReader(config['GNOMAD_GENOMES_DATA_FILE'], exomes=False)
+
+    # Read control data
     control_data = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
 
     # Read MaxEntScan data
@@ -67,8 +70,8 @@ def run(options, version):
                 multiallelic_calls,
                 mother_var_data,
                 father_var_data,
-                gnomad_exomes_file,
-                gnomad_genomes_file,
+                gnomad_exomes_reader,
+                gnomad_genomes_reader,
                 control_data,
                 mother_bam,
                 father_bam
