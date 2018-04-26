@@ -80,45 +80,6 @@ def read_config_file(fn):
     return ret
 
 
-def read_gnomad_database_file(fn):
-
-    ret = {}
-    use_csn = None
-    with open(fn) as f:
-        for line in f:
-            line = line.strip()
-            if line == '' or line[0] == '#':
-                continue
-            cols = line.split('\t')
-
-            if cols[6] != 'PASS':
-                continue
-
-            flags = {}
-            for x in cols[7].split(';'):
-                [k, v] = x.split('=')
-                flags[k] = v
-
-            if use_csn is None:
-                use_csn = ('CSN' in flags and 'GENE' in flags)
-
-            if use_csn:
-                key = (flags['GENE'], flags['CSN'])
-            else:
-                key = tuple(cols[:2]+cols[3:5])
-
-            values = {}
-            for k in ['GC', 'POPMAX', 'AC_POPMAX', 'AN_POPMAX', 'AF_POPMAX']:
-                values[k] = flags[k]
-
-            GCv = map(int, values['GC'].split(','))
-            values['freq'] = 100 * (GCv[1] + GCv[2]) / sum(GCv)
-
-            ret[key] = values
-
-    return ret, use_csn
-
-
 def read_custom_database_file(fn):
 
     ret = {}

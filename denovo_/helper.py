@@ -1,166 +1,44 @@
 from __future__ import division
 import sys
 import alleles
+import parsers
+import pysam
+import gnomad
+import maxentscan
 
 
-def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_reader, gnomad_genomes_reader, control_data, mother_bam, father_bam):
+def read_data(options, config):
 
-    csn_key = (data['gene'], data['csn'])
+    ret = {}
 
-    # Check if variant is multiallelic
-    if config['REMOVE_MULTI_ALLELE_CALLS'] and var_key[:3] in multiallelic_calls:
-        return {'filter': 'multi_allele_call'}
+    # Read variant data of the three individuals
+    ret['child_var'] = parsers.read_variant_file(options.child_var)
+    ret['mother_var'] = parsers.read_variant_file(options.mother_var)
+    ret['father_var'] = parsers.read_variant_file(options.father_var)
 
-    # Check if variant is called in either parent
-    if var_key in mother_var_data or var_key in father_var_data:
-        return {'filter': 'called_in_parent'}
+    # Create list of multiallelic calls in the child
+    ret['multiallelic_calls'] = find_multiallelic_calls(ret['child_var'])
 
-    # Check if variant is "low" quality (as flagged by postCAVA.py)
-    if data['quality'] == 'low':
-        return {'filter': 'low_quality'}
+    # Connect to BAM files of the mother and the father
+    ret['mother_bam'] = pysam.AlignmentFile(options.mother_bam, "rb")
+    ret['father_bam'] = pysam.AlignmentFile(options.father_bam, "rb")
 
-    # Check if variant is outside splice site boundary
-    if not within_splice_site_boundary(data['csn'], config['SPLICE_SITE_BOUNDARY']):
-        return {'filter': 'outside_splice_site_boundary'}
+    # Create GnomadDBReader objects for both gnomAD exomes and genomes
+    ret['gnomad_exomes_reader'] = gnomad.GnomadDBReader(config['GNOMAD_EXOMES_DATA_FILE'])
+    ret['gnomad_genomes_reader'] = gnomad.GnomadDBReader(config['GNOMAD_GENOMES_DATA_FILE'], exomes=False)
 
-    # Check TR in the child
-    if data['TR'] < config['CHILD_MIN_TR']:
-        return {'filter': 'low_child_tr ({})'.format(data['TR'])}
+    # Read control data
+    ret['control'] = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
 
-    # Check TC In the child
-    if data['TC'] < config['CHILD_MIN_TC']:
-        return {'filter': 'low_child_tc ({})'.format(data['TC'])}
+    # Read MaxEntScan data
+    fn = config['MAXENTSCAN_DATA_FILE']
+    ret['maxentscan'] = maxentscan.MaxEntScanData(fn) if fn != '' else None
 
-    # Check TR/TC in the child
-    if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        return {'filter': 'low_child_tr_per_tc ({})'.format(round(data['TR'] / data['TC'], 2))}
+    # Read ExAC data
+    fn = config['EXAC_DATA_FILE']
+    ret['exac'] = parsers.read_exac_data_file(fn) if fn != '' else None
 
-    # Calculate control frequency
-    control_freq = control_data[csn_key] if csn_key in control_data else 0.0
-
-    # Check control variant frequency
-    if control_freq > config['CONTROL_MAX_FREQUENCY']:
-        return {'filter': 'high_control_frequency ({})'.format(control_freq)}
-
-    # Calculate gnomAD frequencies
-    gnomad_exomes_freq, pop_gnomad_exomes = gnomad_exomes_reader.get_max_frequency(var_key, csn_key)
-    gnomad_genomes_freq, pop_gnomad_genomes = gnomad_genomes_reader.get_max_frequency(var_key, csn_key)
-
-    # Check gnomAD exomes variant frequency
-    if pop_gnomad_exomes != '.':
-        if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return {'filter': 'high_gnomad_exomes_frequency ({})'.format(round(gnomad_exomes_freq, 2))}
-
-    # Check gnomAD genomes variant frequency
-    if pop_gnomad_genomes != '.':
-        if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return {'filter': 'high_gnomad_genomes_frequency ({})'.format(round(gnomad_genomes_freq, 2))}
-
-    # Count alleles in parents
-    parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
-
-    # Check TC and TR in the mother
-    if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        return {'filter': 'low_mother_tc ({})'.format(parent_alleles['mother_tc'])}
-    if parent_alleles['mother_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return {'filter': 'high_mother_tr ({})'.format(parent_alleles['mother_tr'])}
-
-    # Check TC and TR in the father
-    if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        return {'filter': 'low_father_tc ({})'.format(parent_alleles['father_tc'])}
-    if parent_alleles['father_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        return {'filter': 'high_father_tr ({})'.format(parent_alleles['father_tr'])}
-
-    return {
-        'filter': None,
-        'control_freq': control_freq,
-        'gnomad_exomes_freq': gnomad_exomes_freq,
-        'gnomad_genomes_freq': gnomad_genomes_freq,
-        'parent_alleles': parent_alleles,
-        'pop_gnomad_exomes': pop_gnomad_exomes,
-        'pop_gnomad_genomes': pop_gnomad_genomes
-    }
-
-
-def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, father_var_data, gnomad_exomes_reader, gnomad_genomes_reader, control_data, mother_bam, father_bam):
-
-    csn_key = (data['gene'], data['csn'])
-
-    filter = []
-
-    # Check if variant is multiallelic
-    if config['REMOVE_MULTI_ALLELE_CALLS'] and var_key[:3] in multiallelic_calls:
-        filter.append('multi_allele_call')
-
-    # Check if variant is called in either parent
-    if var_key in mother_var_data or var_key in father_var_data:
-        filter.append('called_in_parent')
-
-    # Check if variant is "low" quality (as flagged by postCAVA.py)
-    if data['quality'] == 'low':
-        filter.append('low_quality')
-
-    # Check if variant is outside splice site boundary
-    if not within_splice_site_boundary(data['csn'], config['SPLICE_SITE_BOUNDARY']):
-        filter.append('outside_splice_site_boundary')
-
-    # Check TR in the child
-    if data['TR'] < config['CHILD_MIN_TR']:
-        filter.append('low_child_tr ({})'.format(data['TR']))
-
-    # Check TC In the child
-    if data['TC'] < config['CHILD_MIN_TC']:
-        filter.append('low_child_tc ({})'.format(data['TC']))
-
-    # Check TR/TC in the child
-    if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        filter.append('low_child_tr_per_tc ({})'.format(round(data['TR'] / data['TC'], 2)))
-
-    # Calculate control frequency
-    control_freq = control_data[csn_key] if csn_key in control_data else 0.0
-
-    # Check control variant frequency
-    if control_freq > config['CONTROL_MAX_FREQUENCY']:
-        filter.append('high_control_frequency ({})'.format(control_freq))
-
-    # Calculate gnomAD frequencies
-    gnomad_exomes_freq, pop_gnomad_exomes = gnomad_exomes_reader.get_max_frequency(var_key, csn_key)
-    gnomad_genomes_freq, pop_gnomad_genomes = gnomad_genomes_reader.get_max_frequency(var_key, csn_key)
-
-    # Check gnomAD exomes variant frequency
-    if gnomad_exomes_freq is not None:
-        if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            filter.append('high_gnomad_exomes_frequency ({})'.format(round(gnomad_exomes_freq, 2)))
-
-    # Check gnomAD genomes variant frequency
-    if gnomad_genomes_freq is not None:
-        if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            filter.append('high_gnomad_genomes_frequency ({})'.format(round(gnomad_genomes_freq, 2)))
-
-    # Count alleles in parents
-    parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
-
-    # Check TC and TR in the mother
-    if parent_alleles['mother_tc'] < config['PARENT_MIN_COVERAGE']:
-        filter.append('low_mother_tc ({})'.format(parent_alleles['mother_tc']))
-    if parent_alleles['mother_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        filter.append('high_mother_tr ({})'.format(parent_alleles['mother_tr']))
-
-    # Check TC and TR in the father
-    if parent_alleles['father_tc'] < config['PARENT_MIN_COVERAGE']:
-        filter.append('low_father_tc ({})'.format(parent_alleles['father_tc']))
-    if parent_alleles['father_tr'] > config['PARENT_MAX_ALT_ALLELE_COUNT']:
-        filter.append('high_father_tr ({})'.format(parent_alleles['father_tr']))
-
-    return {
-        'filter': ','.join(filter) if len(filter) > 0 else None,
-        'control_freq': control_freq,
-        'gnomad_exomes_freq': gnomad_exomes_freq,
-        'gnomad_genomes_freq': gnomad_genomes_freq,
-        'parent_alleles': parent_alleles,
-        'pop_gnomad_exomes': pop_gnomad_exomes,
-        'pop_gnomad_genomes': pop_gnomad_genomes
-    }
+    return ret
 
 
 def count_parent_alleles(mother_bam, father_bam, var_key):
@@ -226,6 +104,20 @@ def _split_to_exon_and_intron_coordinates(coord_part):
     return exonpart, intronpart
 
 
+def output_header_simplified(outfile):
+
+    header = [
+        'CHROM',
+        'POS',
+        'REF',
+        'ALT',
+        'GENE',
+        'CSN',
+        'Filter'
+    ]
+    outfile.write('\t'.join(header)+'\n')
+
+
 def output_header(outfile, maxentscan_columns, exac_columns):
 
     header = [
@@ -238,6 +130,7 @@ def output_header(outfile, maxentscan_columns, exac_columns):
         'CLASS',
         'ALTANN',
         'ALTCLASS',
+        'Filter',
         'gnomAD_exomes_frequency',
         'Population_gnomAD_exomes',
         'gnomAD_genomes_frequency',
@@ -284,24 +177,12 @@ def output_header(outfile, maxentscan_columns, exac_columns):
     outfile.write('\t'.join(header)+'\n')
 
 
-def output_simple(out, var_key, data, result):
+def output_simplified(out, var_key, variant, result):
 
-    out.write(
-        '\t'.join(
-            [
-                var_key[0],
-                var_key[1],
-                var_key[2],
-                var_key[3],
-                data['gene'],
-                data['csn'],
-                result['filter']
-            ]
-        ) + '\n'
-    )
+    out.write('\t'.join(var_key[:4]+[variant['gene'], variant['csn'], result['filter']]) + '\n')
 
 
-def output(outfile, var_key, data, res, maxentscan_scores, exac_values):
+def output(outfile, var_key, data, result, maxentscan_scores, exac_values):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -315,17 +196,18 @@ def output(outfile, var_key, data, res, maxentscan_scores, exac_values):
         data['class_'],
         data['altann'],
         data['altclass'],
-        res['gnomad_exomes_freq'],
-        res['pop_gnomad_exomes'],
-        res['gnomad_genomes_freq'],
-        res['pop_gnomad_genomes'],
-        res['control_freq'],
+        result['filter'],
+        result['gnomad_exomes_freq'],
+        result['pop_gnomad_exomes'],
+        result['gnomad_genomes_freq'],
+        result['pop_gnomad_genomes'],
+        result['control_freq'],
         data['TR'],
         data['TC'],
-        res['parent_alleles']['mother_tr'],
-        res['parent_alleles']['mother_tc'],
-        res['parent_alleles']['father_tr'],
-        res['parent_alleles']['father_tc']
+        result['parent_alleles']['mother_tr'],
+        result['parent_alleles']['mother_tc'],
+        result['parent_alleles']['father_tr'],
+        result['parent_alleles']['father_tc']
     ]
 
     if maxentscan_scores is not None:

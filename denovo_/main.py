@@ -1,8 +1,6 @@
 import parsers
 import helper
-import maxentscan
-import gnomad
-import pysam
+import filters
 
 
 def run(options, version):
@@ -13,100 +11,76 @@ def run(options, version):
     # Read configuration file
     config = parsers.read_config_file(options.config)
 
-    # Read variant data of the three individuals
-    child_var_data = parsers.read_variant_file(options.child_var)
-    mother_var_data = parsers.read_variant_file(options.mother_var)
-    father_var_data = parsers.read_variant_file(options.father_var)
-
-    # Create list of multiallelic calls in the child
-    multiallelic_calls = helper.find_multiallelic_calls(child_var_data)
-
-    # Connect to BAM files of the mother and the father
-    mother_bam = pysam.AlignmentFile(options.mother_bam, "rb")
-    father_bam = pysam.AlignmentFile(options.father_bam, "rb")
-
-    # Create GnomadDBReader objects for both gnomAD exomes and genomes
-    gnomad_exomes_reader = gnomad.GnomadDBReader(config['GNOMAD_EXOMES_DATA_FILE'])
-    gnomad_genomes_reader = gnomad.GnomadDBReader(config['GNOMAD_GENOMES_DATA_FILE'], exomes=False)
-
-    # Read control data
-    control_data = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
-
-    # Read MaxEntScan data
-    maxentscan_data = maxentscan.MaxEntScanData(config['MAXENTSCAN_DATA_FILE']) if config['MAXENTSCAN_DATA_FILE'] != '' else None
-
-    # Read ExAC data
-    exac_data = parsers.read_exac_data_file(config['EXAC_DATA_FILE']) if config['EXAC_DATA_FILE'] != '' else None
+    # Read input data
+    data = helper.read_data(options, config)
 
     # Initialize output files
-    out_denovo = open('{}_denovo_candidates.txt'.format(options.output), 'w')
-    helper.output_header(out_denovo, config['MAXENTSCAN_DATA_FILE'] != '', config['EXAC_DATA_FILE'] != '')
-    out_filtered = open('{}_filtered_out.txt'.format(options.output), 'w')
+    out_included = open('{}_denovo_candidates.txt'.format(options.output), 'w')
+    out_excluded = open('{}_filtered_out.txt'.format(options.output), 'w')
+
+    # Decide whether to write MaxEntScan and ExAC columns
+    write_maxentscan = config['MAXENTSCAN_DATA_FILE'] != ''
+    write_exac = config['EXAC_DATA_FILE'] != ''
+
+    # Write output file headers
+    helper.output_header(out_included, write_maxentscan, write_exac)
+    if options.full_details:
+        helper.output_header(out_excluded, write_maxentscan, write_exac)
+    else:
+        helper.output_header_simplified(out_excluded)
+
+    # Initialize Filters object
+    filt = filters.Filters(options.full_details)
 
     # Initialize counters
     counter = 0
-    counter_denovo = 0
-    counter_filtered = 0
+    counter_included = 0
+    counter_excluded = 0
 
     # Initialize progress info
     helper.init_progress()
 
     # Iterate through the variants called in the child
-    for var_key, data_list in child_var_data.iteritems():
+    for var_key, variants in data['child_var'].iteritems():
 
-        for data in data_list:
-
+        for variant in variants:
             counter += 1
 
             # Print progress info
-            helper.print_progress(counter, len(child_var_data))
+            helper.print_progress(counter, len(data['child_var']))
 
-            check = helper.check_fast if not options.full_details else helper.check_slow
+            # MaxEntScan scores of the variant
+            maxentscan_scores = data['maxentscan'].get_scores(var_key) if data['maxentscan'] is not None else None
 
-            result = check(
-                var_key,
-                data,
-                config,
-                multiallelic_calls,
-                mother_var_data,
-                father_var_data,
-                gnomad_exomes_reader,
-                gnomad_genomes_reader,
-                control_data,
-                mother_bam,
-                father_bam
-            )
-
-            if result['filter'] is None:
-
-                # MaxEntScan scores of the variant
-                maxentscan_scores = maxentscan_data.get_scores(var_key) if maxentscan_data is not None else None
-
-                # ExAC column values of the variant
-                if exac_data is None:
-                    exac_values = None
-                else:
-                    gene = data['gene']
-                    exac_values = exac_data[gene] if gene in exac_data else {}
-
-                helper.output(out_denovo, var_key, data, result, maxentscan_scores, exac_values)
-                counter_denovo += 1
-
+            # ExAC column values of the variant
+            if data['exac'] is None:
+                exac_values = None
             else:
+                gene = data['gene']
+                exac_values = data['exac'][gene] if gene in data['exac'] else {}
 
+            # Apply filters to the variant
+            result = filt.apply_filters(var_key, variant, config, data)
+
+            # Output result
+            if result['filter'] == '.':
+                helper.output(out_included, var_key, variant, result, maxentscan_scores, exac_values)
+                counter_included += 1
+            else:
                 if options.full_details:
-                    helper.output(out_filtered, var_key, data, result, maxentscan_scores, exac_values)
+                    helper.output(out_excluded, var_key, variant, result, maxentscan_scores, exac_values)
                 else:
-                    helper.output_simple(out_filtered, var_key, data, result)
-
-                counter_filtered += 1
+                    helper.output_simplified(out_excluded, var_key, variant, result)
+                counter_excluded += 1
 
     # Finalize progress info
     helper.finalize_progress()
 
     # Close output files
-    out_denovo.close()
-    out_filtered.close()
+    out_included.close()
+    out_excluded.close()
 
     # Print goodbye message and information
-    helper.goodbye(counter_denovo, counter_filtered, options.output)
+    helper.goodbye(counter_included, counter_excluded, options.output)
+
+
