@@ -33,7 +33,7 @@ def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, fathe
 
     # Check TR/TC in the child
     if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        return {'filter': 'low_child_tr_per_tc ({})'.format(data['TR'] / data['TC'])}
+        return {'filter': 'low_child_tr_per_tc ({})'.format(round(data['TR'] / data['TC'], 2))}
 
     # Calculate control frequency
     control_freq = control_data[csn_key] if csn_key in control_data else 0.0
@@ -49,12 +49,12 @@ def check_fast(var_key, data, config, multiallelic_calls, mother_var_data, fathe
     # Check gnomAD exomes variant frequency
     if pop_gnomad_exomes != '.':
         if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return {'filter': 'high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq)}
+            return {'filter': 'high_gnomad_exomes_frequency ({})'.format(round(gnomad_exomes_freq, 2))}
 
     # Check gnomAD genomes variant frequency
     if pop_gnomad_genomes != '.':
         if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            return {'filter': 'high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq)}
+            return {'filter': 'high_gnomad_genomes_frequency ({})'.format(round(gnomad_genomes_freq, 2))}
 
     # Count alleles in parents
     parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
@@ -114,7 +114,7 @@ def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, fathe
 
     # Check TR/TC in the child
     if data['TR'] / data['TC'] < config['CHILD_MIN_TR_PER_TC']:
-        filter.append('low_child_tr_per_tc ({})'.format(data['TR'] / data['TC']))
+        filter.append('low_child_tr_per_tc ({})'.format(round(data['TR'] / data['TC'], 2)))
 
     # Calculate control frequency
     control_freq = control_data[csn_key] if csn_key in control_data else 0.0
@@ -130,12 +130,12 @@ def check_slow(var_key, data, config, multiallelic_calls, mother_var_data, fathe
     # Check gnomAD exomes variant frequency
     if gnomad_exomes_freq is not None:
         if gnomad_exomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            filter.append('high_gnomad_exomes_frequency ({})'.format(gnomad_exomes_freq))
+            filter.append('high_gnomad_exomes_frequency ({})'.format(round(gnomad_exomes_freq, 2)))
 
     # Check gnomAD genomes variant frequency
     if gnomad_genomes_freq is not None:
         if gnomad_genomes_freq > config['GNOMAD_MAX_FREQUENCY']:
-            filter.append('high_gnomad_genomes_frequency ({})'.format(gnomad_genomes_freq))
+            filter.append('high_gnomad_genomes_frequency ({})'.format(round(gnomad_genomes_freq, 2)))
 
     # Count alleles in parents
     parent_alleles = count_parent_alleles(mother_bam, father_bam, var_key)
@@ -369,7 +369,7 @@ def output(outfile, var_key, data, res, maxentscan_scores, exac_values):
         else:
             record += ['.'] * len(exac_columns)
 
-    record = map(str, record)
+    record = [str(round(x, 2)) if type(x)==float else str(x) for x in record]
     outfile.write('\t'.join(record)+'\n')
 
 
