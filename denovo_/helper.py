@@ -179,7 +179,7 @@ def output_header(outfile, maxentscan_columns, exac_columns):
 
 def output_simplified(out, var_key, variant, result):
 
-    out.write('\t'.join(var_key[:4]+[variant['gene'], variant['csn'], result['filter']]) + '\n')
+    out.write('\t'.join(list(var_key[:4])+[variant['gene'], variant['csn'], result['filter']]) + '\n')
 
 
 def output(outfile, var_key, data, result, maxentscan_scores, exac_values):
