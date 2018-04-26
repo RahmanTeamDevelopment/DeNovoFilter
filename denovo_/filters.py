@@ -114,9 +114,9 @@ class Filters(object):
                 'pop_gnomad_genomes': pop_gnomad_genomes
             }
 
-        except ValueError as txt:
+        except ValueError as err:
 
-            return {'filter': txt}
+            return {'filter': str(err)}
 
 
     def _apply(self, condition, txt):
