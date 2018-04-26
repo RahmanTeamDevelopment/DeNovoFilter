@@ -56,7 +56,7 @@ def run(options, version):
             if data['exac'] is None:
                 exac_values = None
             else:
-                gene = data['gene']
+                gene = variant['gene']
                 exac_values = data['exac'][gene] if gene in data['exac'] else {}
 
             # Apply filters to the variant
