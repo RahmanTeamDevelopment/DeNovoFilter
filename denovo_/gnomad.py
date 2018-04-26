@@ -21,6 +21,8 @@ class GnomadDBReader(object):
 
         chrom = var_key[0]
         pos = int(var_key[1])
+        ref = var_key[2]
+        alt = var_key[3]
         gene = csn_key[0]
         csn = csn_key[1]
 
@@ -28,8 +30,12 @@ class GnomadDBReader(object):
 
             for i in range(n_alts):
 
-                if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
-                    continue
+                if csn == '.':
+                    if not (flags['pos'] == pos and flags['ref'] == ref and flags['alts'][i] == alt):
+                        continue
+                else:
+                    if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
+                        continue
 
                 pops = self._extract_pops(flags)
                 if variant_frequency:
@@ -65,6 +71,10 @@ class GnomadDBReader(object):
                 k = x[:x.find('=')]
                 v = x[x.find('=') + 1:]
                 flags[k] = v
+
+            flags['pos'] = int(cols[1])
+            flags['ref'] = cols[3]
+            flags['alts'] = cols[4].split(',')
 
             ret.append((n_alts, flags))
 
