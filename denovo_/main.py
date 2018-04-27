@@ -23,9 +23,9 @@ def run(options, version):
     write_exac = config['EXAC_DATA_FILE'] != ''
 
     # Write output file headers
-    helper.output_header(out_included, write_maxentscan, write_exac)
+    helper.output_header(out_included, write_maxentscan, write_exac, False)
     if options.full_details:
-        helper.output_header(out_excluded, write_maxentscan, write_exac)
+        helper.output_header(out_excluded, write_maxentscan, write_exac, True)
     else:
         helper.output_header_simplified(out_excluded)
 
@@ -64,11 +64,11 @@ def run(options, version):
 
             # Output result
             if result['filter'] == '.':
-                helper.output(out_included, var_key, variant, result, maxentscan_scores, exac_values)
+                helper.output(out_included, var_key, variant, result, maxentscan_scores, exac_values, False)
                 counter_included += 1
             else:
                 if options.full_details:
-                    helper.output(out_excluded, var_key, variant, result, maxentscan_scores, exac_values)
+                    helper.output(out_excluded, var_key, variant, result, maxentscan_scores, exac_values, True)
                 else:
                     helper.output_simplified(out_excluded, var_key, variant, result)
                 counter_excluded += 1

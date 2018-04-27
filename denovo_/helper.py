@@ -119,7 +119,7 @@ def output_header_simplified(outfile):
     outfile.write('\t'.join(header)+'\n')
 
 
-def output_header(outfile, maxentscan_columns, exac_columns):
+def output_header(outfile, maxentscan_columns, exac_columns, output_filter_column):
 
     header = [
         'CHROM',
@@ -130,8 +130,13 @@ def output_header(outfile, maxentscan_columns, exac_columns):
         'CSN',
         'CLASS',
         'ALTANN',
-        'ALTCLASS',
-        'Filter',
+        'ALTCLASS'
+    ]
+
+    if output_filter_column:
+        header.append('Filter')
+
+    header += [
         'gnomAD_exomes_frequency',
         'Population_gnomAD_exomes',
         'gnomAD_genomes_frequency',
@@ -183,7 +188,7 @@ def output_simplified(out, var_key, variant, result):
     out.write('\t'.join(list(var_key[:4])+[variant['gene'], variant['csn'], result['filter']]) + '\n')
 
 
-def output(outfile, var_key, data, result, maxentscan_scores, exac_values):
+def output(outfile, var_key, data, result, maxentscan_scores, exac_values, output_filter_column):
 
     (chrom, pos, ref, alt) = var_key
 
@@ -196,8 +201,13 @@ def output(outfile, var_key, data, result, maxentscan_scores, exac_values):
         data['csn'],
         data['class_'],
         data['altann'],
-        data['altclass'],
-        result['filter'],
+        data['altclass']
+    ]
+
+    if output_filter_column:
+        record.append(result['filter'])
+
+    record += [
         result['gnomad_exomes_freq'],
         result['pop_gnomad_exomes'],
         result['gnomad_genomes_freq'],
