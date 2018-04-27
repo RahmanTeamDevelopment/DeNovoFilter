@@ -34,7 +34,7 @@ def read_variant_file(fn):
 
 def read_config_file(fn):
 
-    sys.stdout.write('Reading configuration file ... ')
+    sys.stdout.write('\nReading configuration file ... ')
     sys.stdout.flush()
 
     ret = {

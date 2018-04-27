@@ -9,6 +9,9 @@ import maxentscan
 
 def read_data(options, config):
 
+    sys.stdout.write('\nReading input data ... ')
+    sys.stdout.flush()
+
     ret = {}
 
     # Read variant data of the three individuals
@@ -38,6 +41,8 @@ def read_data(options, config):
     # Read ExAC data
     fn = config['EXAC_DATA_FILE']
     ret['exac'] = parsers.read_exac_data_file(fn) if fn != '' else None
+
+    print ' - Done.'
 
     return ret
 
