@@ -1,5 +1,6 @@
 from __future__ import division
 from collections import OrderedDict
+import sys
 
 
 def read_variant_file(fn):
@@ -32,6 +33,9 @@ def read_variant_file(fn):
 
 
 def read_config_file(fn):
+
+    sys.stdout.write('Reading configuration file ... ')
+    sys.stdout.flush()
 
     ret = {
         'GNOMAD_MAX_FREQUENCY': 0.1,
@@ -76,6 +80,8 @@ def read_config_file(fn):
         ret[k] = int(ret[k])
 
     ret['REMOVE_MULTI_ALLELE_CALLS'] = (ret['REMOVE_MULTI_ALLELE_CALLS'].upper() == 'TRUE')
+
+    print ' - Done.'
 
     return ret
 
