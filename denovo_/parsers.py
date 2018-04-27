@@ -80,10 +80,10 @@ def read_config_file(fn):
     return ret
 
 
-def read_custom_database_file(fn):
+
+def read_custom_database_file_by_csnkey(fn):
 
     ret = {}
-    use_csn = False
     num_of_samples = None
     with open(fn) as f:
         for line in f:
@@ -94,16 +94,35 @@ def read_custom_database_file(fn):
                 num_of_samples = int(line[line.find('=')+1:])
                 continue
             if line[0] == '#':
-                use_csn = 'CSN' in line
                 continue
 
             cols = line.split('\t')
 
-            if use_csn:
-                key = (cols[6], cols[9])
-            else:
-                key = tuple(cols[:4])
+            key = (cols[6], cols[9])
+            ret[key] = 100 * int(cols[20]) / num_of_samples
 
+    return ret
+
+
+
+def read_custom_database_file_by_varkey(fn):
+
+    ret = {}
+    num_of_samples = None
+    with open(fn) as f:
+        for line in f:
+            line = line.strip()
+            if line == '':
+                continue
+            if line.startswith('##SAMPLES='):
+                num_of_samples = int(line[line.find('=')+1:])
+                continue
+            if line[0] == '#':
+                continue
+
+            cols = line.split('\t')
+
+            key = tuple(cols[:4])
             ret[key] = 100 * int(cols[20]) / num_of_samples
 
     return ret

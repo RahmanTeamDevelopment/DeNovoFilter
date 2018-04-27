@@ -62,7 +62,10 @@ class Filters(object):
             )
 
             # Check control variant frequency
-            control_freq = data['control'][csn_key] if csn_key in data['control'] else 0.0
+            if csn_key[1] == '.':
+                control_freq = data['control_varkey'][var_key] if var_key in data['control_varkey'] else 0.0
+            else:
+                control_freq = data['control_csnkey'][csn_key] if csn_key in data['control_csnkey'] else 0.0
             self._apply(
                 control_freq > config['CONTROL_MAX_FREQUENCY'],
                 'high_control_frequency ({})'.format(control_freq)

@@ -28,7 +28,8 @@ def read_data(options, config):
     ret['gnomad_genomes_reader'] = gnomad.GnomadDBReader(config['GNOMAD_GENOMES_DATA_FILE'], exomes=False)
 
     # Read control data
-    ret['control'] = parsers.read_custom_database_file(config['CONTROL_DATA_FILE'])
+    ret['control_csnkey'] = parsers.read_custom_database_file_by_csnkey(config['CONTROL_DATA_FILE'])
+    ret['control_varkey'] = parsers.read_custom_database_file_by_varkey(config['CONTROL_DATA_FILE'])
 
     # Read MaxEntScan data
     fn = config['MAXENTSCAN_DATA_FILE']
@@ -263,7 +264,7 @@ def welcome(version):
 def goodbye(counter_denovo, counter_filtered, output_prefix):
 
     print '\nNumber of de novo candidates: {}  ({}_denovo_candidates.txt)'.format(counter_denovo, output_prefix)
-    print 'Number of variants filtered out: {}  ({}_filtered.txt)'.format(counter_filtered, output_prefix)
+    print 'Number of variants filtered out: {}  ({}_filtered_out.txt)'.format(counter_filtered, output_prefix)
     print '\n{}\n'.format('=' * 103)
 
 
