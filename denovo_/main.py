@@ -1,9 +1,12 @@
+import datetime
 import parsers
 import helper
 import filters
 
-
 def run(options, version):
+
+    # Start time
+    start_time = datetime.datetime.now()
 
     # Print welcome message and information
     helper.welcome(version)
@@ -80,7 +83,10 @@ def run(options, version):
     out_included.close()
     out_excluded.close()
 
+    # Runtime
+    run_time = str(datetime.datetime.now() - start_time)
+
     # Print goodbye message and information
-    helper.goodbye(counter_included, counter_excluded, options.output)
+    helper.goodbye(counter_included, counter_excluded, options.output, run_time)
 
 

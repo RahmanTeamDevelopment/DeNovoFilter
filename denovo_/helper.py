@@ -9,7 +9,7 @@ import maxentscan
 
 def read_data(options, config):
 
-    sys.stdout.write('\nReading input data ... ')
+    sys.stdout.write('Reading input data ... ')
     sys.stdout.flush()
 
     ret = {}
@@ -276,16 +276,19 @@ def welcome(version):
     print '\n{} DeNovoFilter {} {}'.format('='*3, version, '='*80)
 
 
-def goodbye(counter_denovo, counter_filtered, output_prefix):
+def goodbye(counter_denovo, counter_filtered, output_prefix, runtime):
 
     print '\nNumber of de novo candidates: {}  ({}_denovo_candidates.txt)'.format(counter_denovo, output_prefix)
     print 'Number of variants filtered out: {}  ({}_filtered_out.txt)'.format(counter_filtered, output_prefix)
-    print '\n{}\n'.format('=' * 103)
+
+    runtime = runtime[:runtime.find('.')]
+    print '\n Finished in: {}'.format(runtime)
+
+    print '{}\n'.format('=' * 103)
 
 
 def init_progress():
 
-    print ''
     sys.stdout.write('\rProcessing variants ... 0.0%')
     sys.stdout.flush()
 
