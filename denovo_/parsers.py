@@ -7,25 +7,33 @@ def read_variant_file(fn):
 
     ret = OrderedDict()
 
+    idx = {}
+
     with open(fn) as f:
         for line in f:
             line = line.strip()
-            if line == '' or line[0] == '#':
+            if line == '':
                 continue
+
+            if line[0] == '#':
+                header = line[1:].split('\t')
+                for t in ['QUALFLAG', 'TR', 'TC', 'GENE', 'CSN', 'CLASS', 'ALTANN', 'ALTCLASS']:
+                    idx[t] = header.index(t)
+
             cols = line.split('\t')
             key = tuple(cols[:4])
             if key not in ret:
                 ret[key] = []
             ret[key].append(
                 {
-                    'quality': cols[5],
-                    'TR': int(cols[7]),
-                    'TC': int(cols[8]),
-                    'gene': cols[13],
-                    'csn': cols[16],
-                    'class_': cols[17],
-                    'altann': cols[23],
-                    'altclass': cols[24]
+                    'quality': cols[idx['QUALFLAG']],
+                    'TR': int(cols[idx['TR']]),
+                    'TC': int(cols[idx['TC']]),
+                    'gene': cols[idx['GENE']],
+                    'csn': cols[idx['CSN']],
+                    'class_': cols[idx['CLASS']],
+                    'altann': cols[idx['ALTANN']],
+                    'altclass': cols[idx['ALTCLASS']]
                 }
             )
 
