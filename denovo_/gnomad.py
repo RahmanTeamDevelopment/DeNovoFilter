@@ -51,16 +51,22 @@ class GnomadDBReader(object):
 
     def _read_variants_in_vicinity(self, chrom, pos, delta=100):
 
-        ret = []
+        if self.exomes:
+            tabix_file = self.tabix_files['_']
+        else:
+            if chrom in self.tabix_files:
+                tabix_file = self.tabix_files[chrom]
+            else:
+                return []
 
-        tabix_file = self.tabix_files['_'] if self.exomes else self.tabix_files[chrom]
+        if chrom not in tabix_file.contigs:
+            return []
+
+        ret = []
 
         for line in tabix_file.fetch(chrom, pos - delta, pos + delta):
             line = line.strip()
             cols = line.split('\t')
-
-            if cols[6] != 'PASS':
-                continue
 
             n_alts = len(cols[4].split(','))
 
