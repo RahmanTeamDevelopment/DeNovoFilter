@@ -34,7 +34,9 @@ class GnomadDBReader(object):
                     if not (flags['pos'] == pos and flags['ref'] == ref and flags['alts'][i] == alt):
                         continue
                 else:
-                    if not (flags['GENE'].split(',')[i] == gene and flags['CSN'].split(',')[i] == csn):
+                    genes = flags['GENE'].split(',')[i].split(':')
+                    csns = flags['CSN'].split(',')[i].split(':')
+                    if not any([genes[j] == gene and csns[j] == csn for j in range(len(genes))]):
                         continue
 
                 pops = self._extract_pops(flags)
