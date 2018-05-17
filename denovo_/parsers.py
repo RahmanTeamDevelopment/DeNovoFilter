@@ -59,6 +59,7 @@ def read_variant_file_from_vcf(fn):
         ref = cols[3]
         alts = cols[4].split(",")
         qual = cols[5]
+        filter_ = cols[6]
         info = cols[7]
 
         infobits = info.split(';')
@@ -117,7 +118,7 @@ def read_variant_file_from_vcf(fn):
                     qualflag = 'low'
             else:
                 prop = float(TRs[i]) / float(TC)
-                if prop > 0.2 and filter == 'PASS':
+                if prop > 0.2 and filter_ == 'PASS':
                     qualflag = 'high'
                 else:
                     qualflag = 'low'
