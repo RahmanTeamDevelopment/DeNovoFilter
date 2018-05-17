@@ -47,7 +47,7 @@ def read_variant_file_from_vcf(fn):
 
     for line in open(fn):
         line = line.strip()
-        if line == '' or line.startswith('##'):
+        if line == '' or line.startswith('#'):
             continue
 
         cols = line.split('\t')
@@ -90,7 +90,7 @@ def read_variant_file_from_vcf(fn):
         for i in range(len(alts)):
             alt = alts[i]
 
-            var_key = (chrom, int(pos), ref, alt)
+            var_key = (chrom, pos, ref, alt)
 
             ENST = ENST_byalt[i]
             transcripts = ENST.split(':')
@@ -129,10 +129,10 @@ def read_variant_file_from_vcf(fn):
                 ret[var_key].append(
                     {
                         'quality': qualflag,
-                        'TR': TRs[i],
-                        'TC': TC,
-                        'NF': NFs[i],
-                        'NR': NRs[i],
+                        'TR': int(TRs[i]),
+                        'TC': int(TC),
+                        'NF': int(NFs[i]),
+                        'NR': int(NRs[i]),
                         'gene': GENE_bytrans[j],
                         'csn': CSN_bytrans[j],
                         'class_': CLASS_bytrans[j],
