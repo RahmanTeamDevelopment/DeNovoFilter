@@ -70,7 +70,7 @@ def read_variant_file_from_vcf(fn):
                 value = infobit[idx + 1:].strip()
                 infodict[key] = value
 
-        ENST_byalt = infodict['ENST'].split(',')
+        ENST_byalt = infodict['TRANSCRIPT'].split(',')
         GENE_byalt = infodict['GENE'].split(',')
         CSN_byalt = infodict['CSN'].split(',')
         CLASS_byalt = infodict['CLASS'].split(',')
