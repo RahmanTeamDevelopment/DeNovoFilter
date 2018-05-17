@@ -15,9 +15,9 @@ def read_data(options, config):
     ret = {}
 
     # Read variant data of the three individuals
-    ret['child_var'] = parsers.read_variant_file(options.child_var)
-    ret['mother_var'] = parsers.read_variant_file(options.mother_var)
-    ret['father_var'] = parsers.read_variant_file(options.father_var)
+    ret['child_var'] = parsers.read_variant_file_from_vcf(options.child_var)
+    ret['mother_var'] = parsers.read_variant_file_from_vcf(options.mother_var)
+    ret['father_var'] = parsers.read_variant_file_from_vcf(options.father_var)
 
     # Create list of multiallelic calls in the child
     ret['multiallelic_calls'] = find_multiallelic_calls(ret['child_var'])
@@ -149,6 +149,8 @@ def output_header(outfile, maxentscan_columns, exac_columns, output_filter_colum
         'Control_frequency',
         'Child_TR',
         'Child_TC',
+        'Child_NF',
+        'Child_NR',
         'Mother_TR',
         'Mother_TC',
         'Father_TR',
@@ -220,6 +222,8 @@ def output(outfile, var_key, data, result, maxentscan_scores, exac_values, outpu
         result['control_freq'],
         data['TR'],
         data['TC'],
+        data['NF'],
+        data['NR'],
         result['parent_alleles']['mother_tr'],
         result['parent_alleles']['mother_tc'],
         result['parent_alleles']['father_tr'],
