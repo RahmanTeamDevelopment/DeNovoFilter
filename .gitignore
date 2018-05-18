@@ -1,1 +1,13 @@
-# Created by .ignore support plugin (hsz.mobi)
+/env
+/.cache
+/.idea
+*.pyc
+*.swpc
+*/*.pyc
+*/*.swp
+*/*/*.swp
+/__pycache__
+/*/__pycache__
+/*/*/__pycache__
+/*/*/*/__pycache__
+
