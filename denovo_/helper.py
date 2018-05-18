@@ -15,9 +15,9 @@ def read_data(options, config):
     ret = {}
 
     # Read variant data of the three individuals
-    ret['child_var'] = parsers.read_variant_file_from_vcf(options.child_var)
-    ret['mother_var'] = parsers.read_variant_file_from_vcf(options.mother_var)
-    ret['father_var'] = parsers.read_variant_file_from_vcf(options.father_var)
+    ret['child_var'] = parsers.read_vcf_file(options.child_var)
+    ret['mother_var'] = parsers.read_vcf_file(options.mother_var)
+    ret['father_var'] = parsers.read_vcf_file(options.father_var)
 
     # Create list of multiallelic calls in the child
     ret['multiallelic_calls'] = find_multiallelic_calls(ret['child_var'])

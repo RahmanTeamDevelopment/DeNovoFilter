@@ -3,144 +3,64 @@ from collections import OrderedDict
 import sys
 
 
-def read_variant_file(fn):
 
-    ret = OrderedDict()
+def parse_vcf_record(line):
 
-    idx = {}
+    cols = line.split()
 
-    with open(fn) as f:
-        for line in f:
-            line = line.strip()
-            if line == '':
-                continue
+    info = dict(x.split('=', 1) for x in cols[7].split(';') if '=' in x)
 
-            if line[0] == '#':
-                header = line[1:].split('\t')
-                for t in ['QUALFLAG', 'TR', 'TC', 'GENE', 'CSN', 'CLASS', 'ALTANN', 'ALTCLASS']:
-                    idx[t] = header.index(t)
-                continue
+    if float(info['TC']) == 0:
+        return
 
-            cols = line.split('\t')
-            key = tuple(cols[:4])
-            if key not in ret:
-                ret[key] = []
-            ret[key].append(
+    by_alt = dict((key, info[key].split(',')) for key in info)
+
+    chrom = cols[0] if not cols[0].startswith('chr') else cols[0][3:]
+
+    ret = {}
+    for i, alt in enumerate(cols[4].split(",")):
+
+        var_key = (chrom, cols[1], cols[3], alt)
+
+        by_transcript = dict((key, by_alt[key][i].split(':')) for key in ['GENE', 'CSN', 'CLASS', 'ALTANN', 'ALTCLASS'])
+
+        if by_alt['TYPE'][i] == 'Substitution':
+            qual_flag = 'high' if float(cols[5]) >= 100 else 'low'
+        else:
+            prop = float(by_alt['TR'][i]) / float(info['TC'])
+            qual_flag = 'high' if prop > 0.2 and cols[6] == 'PASS' else 'low'
+
+        ret[var_key] = []
+        for j in range(len(by_transcript['GENE'])):
+
+            ret[var_key].append(
                 {
-                    'quality': cols[idx['QUALFLAG']],
-                    'TR': int(cols[idx['TR']]),
-                    'TC': int(cols[idx['TC']]),
-                    'gene': cols[idx['GENE']],
-                    'csn': cols[idx['CSN']],
-                    'class_': cols[idx['CLASS']],
-                    'altann': cols[idx['ALTANN']],
-                    'altclass': cols[idx['ALTCLASS']]
+                    'quality': qual_flag,
+                    'TR': int(by_alt['TR'][i]),
+                    'TC': int(info['TC']),
+                    'NF': int(by_alt['NF'][i]),
+                    'NR': int(by_alt['NR'][i]),
+                    'gene': by_transcript['GENE'][j],
+                    'csn': by_transcript['CSN'][j],
+                    'class_': by_transcript['CLASS'][j],
+                    'altann': by_transcript['ALTANN'][j],
+                    'altclass': by_transcript['ALTCLASS'][j]
                 }
             )
 
     return ret
 
 
-def read_variant_file_from_vcf(fn):
+def read_vcf_file(fn):
 
     ret = OrderedDict()
-
     for line in open(fn):
         line = line.strip()
         if line == '' or line.startswith('#'):
             continue
-
-        cols = line.split('\t')
-
-        chrom = cols[0]
-        if chrom.startswith('chr'):
-            chrom = chrom[3:]
-        pos = cols[1]
-        ref = cols[3]
-        alts = cols[4].split(",")
-        qual = cols[5]
-        filter_ = cols[6]
-        info = cols[7]
-
-        infobits = info.split(';')
-        infodict = {}
-        for infobit in infobits:
-            idx = infobit.find('=')
-            if idx != -1:
-                key = infobit[:idx].strip()
-                value = infobit[idx + 1:].strip()
-                infodict[key] = value
-
-        ENST_byalt = infodict['TRANSCRIPT'].split(',')
-        GENE_byalt = infodict['GENE'].split(',')
-        CSN_byalt = infodict['CSN'].split(',')
-        CLASS_byalt = infodict['CLASS'].split(',')
-        ALTANN_byalt = infodict['ALTANN'].split(',')
-        ALTCLASS_byalt = infodict['ALTCLASS'].split(',')
-        TYPE_byalt = infodict['TYPE'].split(',')
-
-        TRs = infodict['TR'].split(',')
-        TC = infodict['TC']
-
-        NFs = infodict['NF'].split(',')
-        NRs = infodict['NR'].split(',')
-
-        if float(TC) == 0:
-            continue
-
-        for i in range(len(alts)):
-            alt = alts[i]
-
-            var_key = (chrom, pos, ref, alt)
-
-            ENST = ENST_byalt[i]
-            transcripts = ENST.split(':')
-
-            GENE = GENE_byalt[i]
-            GENE_bytrans = GENE.split(':')
-
-            CSN = CSN_byalt[i]
-            CSN_bytrans = CSN.split(':')
-
-            CLASS = CLASS_byalt[i]
-            CLASS_bytrans = CLASS.split(':')
-
-            ALTANN = ALTANN_byalt[i]
-            ALTANN_bytrans = ALTANN.split(':')
-
-            ALTCLASS = ALTCLASS_byalt[i]
-            ALTCLASS_bytrans = ALTCLASS.split(':')
-
-            if TYPE_byalt[i] == 'Substitution':
-                if float(qual) >= 100:
-                    qualflag = 'high'
-                else:
-                    qualflag = 'low'
-            else:
-                prop = float(TRs[i]) / float(TC)
-                if prop > 0.2 and filter_ == 'PASS':
-                    qualflag = 'high'
-                else:
-                    qualflag = 'low'
-
-            ret[var_key] = []
-            for j in range(len(transcripts)):
-                if CSN_bytrans[j] == '.':
-                    continue
-                ret[var_key].append(
-                    {
-                        'quality': qualflag,
-                        'TR': int(TRs[i]),
-                        'TC': int(TC),
-                        'NF': int(NFs[i]),
-                        'NR': int(NRs[i]),
-                        'gene': GENE_bytrans[j],
-                        'csn': CSN_bytrans[j],
-                        'class_': CLASS_bytrans[j],
-                        'altann': ALTANN_bytrans[j],
-                        'altclass': ALTCLASS_bytrans[j]
-                    }
-                )
+        parsed_record = parse_vcf_record(line)
+        if parsed_record is not None:
+            ret.update()
 
     return ret
 
