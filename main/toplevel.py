@@ -1,15 +1,17 @@
+from .version import __version__
 import datetime
 import parsers
 import helper
 import filters
 
-def run(options, version):
+
+def run(options):
 
     # Start time
     start_time = datetime.datetime.now()
 
     # Print welcome message and information
-    helper.welcome(version)
+    helper.welcome(__version__)
 
     # Read configuration file
     config = parsers.read_config_file(options.config)

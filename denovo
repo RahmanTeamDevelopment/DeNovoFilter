@@ -1,3 +1,5 @@
 #!/bin/bash
+unset PYTHONPATH
 ABSOLUTE_PATH=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-$ABSOLUTE_PATH/env/bin/denovo $*
+source $ABSOLUTE_PATH/env/bin/activate
+DeNovoFilter.py $*

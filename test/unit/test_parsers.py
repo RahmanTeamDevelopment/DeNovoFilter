@@ -1,7 +1,7 @@
 """Unit tests for the parsers module"""
 
 from unittest import TestCase
-from denovo_ import parsers
+from main import parsers
 
 
 
@@ -205,3 +205,35 @@ class TestVCFParser(TestCase):
 
         self.assertIsNone(parsers.parse_vcf_record(vcf_record))
 
+
+    def _test_read_vcf_file(self):
+
+        pass
+
+
+
+
+class TestConfigFileParser(TestCase):
+
+
+    def _test_read_config_file(self):
+
+        pass
+
+
+
+class TestCustomDatabaseFileParser(TestCase):
+
+
+    def _test_read_custom_database_file(self):
+
+        pass
+
+
+
+class TestExACDatabaseFileParser(TestCase):
+
+
+    def _test_read_exac_data_file(self):
+
+        pass
