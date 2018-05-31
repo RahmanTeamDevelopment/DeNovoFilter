@@ -1,7 +1,6 @@
 """Unit tests for the filters module"""
 
 from unittest import TestCase
-import pytest
 from main import filters
 
 
@@ -11,46 +10,61 @@ class TestFilters(TestCase):
 
     def setUp(self):
 
-        # SELF.CONFIG TO BE DOWNLOADED LATER
-        self.config = {
-            'REMOVE_MULTI_ALLELE_CALLS': True,
-            'SPLICE_SITE_BOUNDARY': 10,
-            'CHILD_MIN_TR': 3,
-            'CHILD_MIN_TC': 15,
-            'CHILD_MIN_TR_PER_TC': 0.2,
-            'CONTROL_MAX_FREQUENCY': 0.1,
-            'GNOMAD_MAX_FREQUENCY': 0.1,
-            'PARENT_MIN_COVERAGE': 6,
-            'PARENT_MAX_ALT_ALLELE_COUNT': 1,
-        }
-
-        self.filt = filters.Filters(True)
+        self.filt = filters.Filters(False)
 
 
-    def _test_check_if_multiallelic(self):
+    def assert_exception(self, errmsg='', fun=lambda: None, argv=None):
+
+        with self.assertRaises(ValueError) as cm:
+            fun(*argv)
+        err = cm.exception
+        self.assertEqual(str(err), errmsg)
+
+
+    def assert_no_exception(self, fun=lambda: None, argv=None):
+
+        try:
+            fun(*argv)
+        except ValueError:
+            self.fail("{}() raised ValueError unexpectedly".format(fun.func_name))
+
+
+
+
+    def test_check_if_multiallelic(self):
 
         multi_calls = [('7', 41231134, 'GGG'), ('12', 12345678, 'AC')]
 
-        assert self.filt.check_if_multiallelic(
-            {'REMOVE_MULTI_ALLELE_CALLS': True},
-            {'multiallelic_calls': multi_calls},
-            ('12', 12345678, 'AC', 'T')
-        ) is True
+        self.assert_exception(
+            errmsg='multi_allele_call',
+            fun=self.filt.check_if_multiallelic,
+            argv=[
+                {'REMOVE_MULTI_ALLELE_CALLS': True},
+                {'multiallelic_calls': multi_calls},
+                ('12', 12345678, 'AC', 'T')
+            ]
+        )
 
-        assert self.filt.check_if_multiallelic(
-            {'REMOVE_MULTI_ALLELE_CALLS': True},
-            {'multiallelic_calls': multi_calls},
-            ('2', 12345678, 'AC', 'T')
-        ) is False
+        self.assert_no_exception(
+            fun=self.filt.check_if_multiallelic,
+            argv=[
+                {'REMOVE_MULTI_ALLELE_CALLS': True},
+                {'multiallelic_calls': multi_calls},
+                ('2', 12345678, 'AC', 'T')
+            ]
+        )
 
-        assert self.filt.check_if_multiallelic(
-            {'REMOVE_MULTI_ALLELE_CALLS': True},
-            {'multiallelic_calls': []},
-            ('12', 12345678, 'AC', 'T')
-        ) is False
+        self.assert_no_exception(
+            fun=self.filt.check_if_multiallelic,
+            argv=[
+                {'REMOVE_MULTI_ALLELE_CALLS': True},
+                {'multiallelic_calls': []},
+                ('12', 12345678, 'AC', 'T')
+            ]
+        )
 
 
-    def _test_check_if_called_in_parent(self):
+    def test_check_if_called_in_parent(self):
 
         data = {
             'mother_var': {
@@ -62,33 +76,56 @@ class TestFilters(TestCase):
             }
         }
 
-        assert self.filt.check_if_called_in_parent(
-            data,
-            ('12', 12345678, 'AC', 'T')
-        ) is True
+        self.assert_exception(
+            errmsg='called_in_parent',
+            fun=self.filt.check_if_called_in_parent,
+            argv=[
+                data,
+                ('12', 12345678, 'AC', 'T')
+            ]
+        )
 
-        assert self.filt.check_if_called_in_parent(
-            data,
-            ('5', 4779121, 'G', 'C')
-        ) is True
+        self.assert_exception(
+            errmsg='called_in_parent',
+            fun=self.filt.check_if_called_in_parent,
+            argv=[
+                data,
+                ('5', 4779121, 'G', 'C')
+            ]
+        )
 
-        assert self.filt.check_if_called_in_parent(
-            data,
-            ('9', 24681012, 'A', 'T')
-        ) is False
+        self.assert_no_exception(
+            fun=self.filt.check_if_called_in_parent,
+            argv=[
+                data,
+                ('9', 24681012, 'A', 'T')
+            ]
+        )
 
 
-    def _test_check_if_low_quality(self):
+    def test_check_if_low_quality(self):
 
-        assert self.filt.check_if_low_quality({'quality': 'low'}) is True
-        assert self.filt.check_if_low_quality({'quality': 'else'}) is False
+        self.assert_exception(
+            errmsg='low_quality',
+            fun=self.filt.check_if_low_quality,
+            argv=[{'quality': 'low'}]
+        )
+
+        self.assert_no_exception(
+            fun=self.filt.check_if_low_quality,
+            argv=[{'quality': 'else'}]
+        )
 
 
-    def _test_check_if_outside_splice_side_boundary(self):
-
-        assert self.filt.check_if_outside_splice_side_boundary(
-            {'SPLICE_SITE_BOUNDARY': 10},
-            {'csn': '....'}
-        ) is True
+    def test_check_if_outside_splice_side_boundary(self):
 
         # More asserts
+
+        self.assert_no_exception(
+            fun=self.filt.check_if_outside_splice_side_boundary,
+            argv=[
+                {'SPLICE_SITE_BOUNDARY': 10},
+                {'csn': 'c.111A>C_p.='}
+            ]
+        )
+
