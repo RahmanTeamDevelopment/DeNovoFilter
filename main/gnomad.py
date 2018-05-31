@@ -46,6 +46,9 @@ class GnomadDBReader(object):
                     popfreqs = [float(flags['AF_' + pop].split(',')[i]) for pop in pops]
                 maxfreq = max(popfreqs)
 
+                if maxfreq == 0:
+                    return 0.0, '.'
+
                 return maxfreq, pops[popfreqs.index(maxfreq)]
 
         return 0.0, '.'
