@@ -69,6 +69,9 @@ def find_multiallelic_calls(var_data):
 
 def within_splice_site_boundary(csn, cutoff):
 
+    if csn == '.':
+        return False
+    
     csn_c = csn.split('_p.', 1)[0] if '_p.' in csn else csn
     cutidx = [csn_c.find(x) for x in ['A>', 'C>', 'G>', 'T>', 'del', 'ins', 'dup'] if x in csn_c]
     coords = csn_c[csn_c.find("c.") + 2:min(cutidx)]
