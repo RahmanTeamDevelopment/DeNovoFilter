@@ -10,8 +10,6 @@ def parse_vcf_record(line):
 
     info = dict(x.split('=', 1) for x in cols[7].split(';') if '=' in x)
 
-    print info['TC']
-
     if float(info['TC']) == 0:
         return
 
